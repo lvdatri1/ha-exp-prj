@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { parse } from 'csv-parse';
-import { getDb } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { parse } from "csv-parse";
+import { getDb } from "@/lib/db";
 
 interface CSVRow {
   [key: string]: string;
@@ -8,24 +8,18 @@ interface CSVRow {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.cookies.get('session_user_id')?.value;
+    const userId = request.cookies.get("session_user_id")?.value;
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const override = formData.get('override') === 'true';
+    const file = formData.get("file") as File;
+    const override = formData.get("override") === "true";
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Convert file to buffer
@@ -41,7 +35,7 @@ export async function POST(request: NextRequest) {
     });
 
     for await (const row of parser) {
-      if (row[0] === 'DET') {
+      if (row[0] === "DET") {
         try {
           const startTime = row[9];
           const endTime = row[10];
@@ -61,17 +55,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (records.length === 0) {
-      return NextResponse.json(
-        { error: 'CSV file is empty or invalid' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "CSV file is empty or invalid" }, { status: 400 });
     }
 
     const db = getDb();
 
     // Clear existing data for this user if override is true
     if (override) {
-      db.prepare('DELETE FROM energy_data WHERE user_id = ?').run(parseInt(userId));
+      db.prepare("DELETE FROM energy_data WHERE user_id = ?").run(parseInt(userId));
     }
 
     // Sort by start time
@@ -80,7 +71,7 @@ export async function POST(request: NextRequest) {
     // Group by date
     const dateGroups: { [key: string]: any[] } = {};
     records.forEach((item) => {
-      const dateKey = item.startTime.toISOString().split('T')[0];
+      const dateKey = item.startTime.toISOString().split("T")[0];
       if (!dateGroups[dateKey]) {
         dateGroups[dateKey] = [];
       }
@@ -110,9 +101,7 @@ export async function POST(request: NextRequest) {
             // Check if already exists (if not overriding)
             if (!override) {
               const existing = db
-                .prepare(
-                  'SELECT 1 FROM energy_data WHERE user_id = ? AND start_time = ?'
-                )
+                .prepare("SELECT 1 FROM energy_data WHERE user_id = ? AND start_time = ?")
                 .get(parseInt(userId), current.startTime.toISOString());
 
               if (existing) {
@@ -168,97 +157,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Import completed successfully',
-      stats: {
-        total: records.length,
-        periodRecords,
-        dailyTotals,
-        skipped,
-        override,
-      },
-    });
-  } catch (error) {
-    console.error('Import error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Import failed' },
-      { status: 500 }
-    );
-  }
-}
-
-function parseDateTime(dateTimeStr: string): Date {
-  const [datePart, timePart] = dateTimeStr.split(' ');
-  const [day, month, year] = datePart.split('/');
-  const [hours, minutes, seconds] = timePart.split(':');
-  return new Date(
-    parseInt(year),
-    parseInt(month) - 1,
-    parseInt(day),
-    parseInt(hours),
-    parseInt(minutes),
-    parseInt(seconds)
-  );
-}
-
-    const insertStmt = db.prepare(`
-      INSERT OR REPLACE INTO energy_data (date, period, consumption_kwh, record_type)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    let periodRecords = 0;
-    let dailyTotals = 0;
-    let skipped = 0;
-
-    // Process records
-    const insertMany = db.transaction((rows: CSVRow[]) => {
-      for (const row of rows) {
-        const date = row.Date;
-        const period = row.Period;
-        const consumption = parseFloat(row["Consumption (kWh)"]);
-
-        if (!date || isNaN(consumption)) {
-          skipped++;
-          continue;
-        }
-
-        // Check if it's a daily total (period 0 or empty/null)
-        const isDailyTotal = !period || period === "0" || period.trim() === "";
-
-        if (!override && !isDailyTotal) {
-          // Check if record already exists
-          const existing = db
-            .prepare("SELECT 1 FROM energy_data WHERE date = ? AND period = ? AND record_type = ?")
-            .get(date, period, "period");
-
-          if (existing) {
-            skipped++;
-            continue;
-          }
-        } else if (!override && isDailyTotal) {
-          const existing = db
-            .prepare("SELECT 1 FROM energy_data WHERE date = ? AND record_type = ?")
-            .get(date, "daily_total");
-
-          if (existing) {
-            skipped++;
-            continue;
-          }
-        }
-
-        if (isDailyTotal) {
-          insertStmt.run(date, null, consumption, "daily_total");
-          dailyTotals++;
-        } else {
-          insertStmt.run(date, period, consumption, "period");
-          periodRecords++;
-        }
-      }
-    });
-
-    insertMany(records);
-
-    return NextResponse.json({
-      success: true,
       message: "Import completed successfully",
       stats: {
         total: records.length,
@@ -272,4 +170,18 @@ function parseDateTime(dateTimeStr: string): Date {
     console.error("Import error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Import failed" }, { status: 500 });
   }
+}
+
+function parseDateTime(dateTimeStr: string): Date {
+  const [datePart, timePart] = dateTimeStr.split(" ");
+  const [day, month, year] = datePart.split("/");
+  const [hours, minutes, seconds] = timePart.split(":");
+  return new Date(
+    parseInt(year),
+    parseInt(month) - 1,
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    parseInt(seconds)
+  );
 }

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import DataTab from "@/components/DataTab";
 import ChartsTab from "@/components/ChartsTab";
-import ForecastTab from "@/components/ForecastTab";
 import ImportTab from "@/components/ImportTab";
 import AuthModal from "@/components/AuthModal";
 
@@ -15,7 +14,7 @@ interface User {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("data");
+  const [activeTab, setActiveTab] = useState("charts");
   const [allData, setAllData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
