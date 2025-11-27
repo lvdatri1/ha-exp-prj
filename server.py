@@ -686,6 +686,17 @@ def index():
     </div>
 
     <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            document.body.innerHTML = '<h1 style="color:red;">JavaScript Error!</h1><pre>' + 
+                'Message: ' + message + '\\n' +
+                'Source: ' + source + '\\n' +
+                'Line: ' + lineno + '\\n' +
+                'Column: ' + colno + '\\n' +
+                'Error: ' + error +
+                '</pre>';
+            return true;
+        };
+
         let allData = [];
         let filteredData = [];
         let currentPage = 1;
@@ -710,9 +721,13 @@ def index():
         }
 
         async function loadData() {
+            console.log('loadData called');
             try {
+                console.log('Fetching /api/data/all');
                 const response = await fetch('/api/data/all');
+                console.log('Response received:', response);
                 const data = await response.json();
+                console.log('Data parsed:', data.records.length, 'records');
                 allData = data.records;
                 filteredData = allData;
                 updateStats();
@@ -720,6 +735,7 @@ def index():
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dataTable').style.display = 'table';
             } catch (error) {
+                console.error('Error in loadData:', error);
                 document.getElementById('loading').textContent = 'Error loading data: ' + error.message;
             }
         }
@@ -939,6 +955,21 @@ def index():
 </body>
 </html>
     '''
+
+@app.route('/test')
+def test():
+    """Test endpoint"""
+    return '''<html><body><h1>Test</h1>
+<script>
+console.log('Script loaded');
+async function test() {
+    console.log('Test function called');
+    const response = await fetch('/api/data/all');
+    console.log(response);
+}
+test();
+</script>
+</body></html>'''
 
 @app.route('/api/data/all', methods=['GET'])
 def get_all_data():
