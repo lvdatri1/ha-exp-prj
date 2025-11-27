@@ -101,14 +101,11 @@ export default function Home() {
       </div>
 
       <div className="tabs">
-        <button className={`tab ${activeTab === "data" ? "active" : ""}`} onClick={() => setActiveTab("data")}>
-          📊 Historical Data
-        </button>
         <button className={`tab ${activeTab === "charts" ? "active" : ""}`} onClick={() => setActiveTab("charts")}>
           📈 Analytics
         </button>
-        <button className={`tab ${activeTab === "forecast" ? "active" : ""}`} onClick={() => setActiveTab("forecast")}>
-          🔮 Forecast
+        <button className={`tab ${activeTab === "data" ? "active" : ""}`} onClick={() => setActiveTab("data")}>
+          📊 Historical Data
         </button>
         <button className={`tab ${activeTab === "import" ? "active" : ""}`} onClick={() => setActiveTab("import")}>
           📁 Import Data
@@ -119,9 +116,8 @@ export default function Home() {
         <div className="loading">Loading data...</div>
       ) : (
         <>
-          {activeTab === "data" && <DataTab allData={allData} />}
           {activeTab === "charts" && <ChartsTab allData={allData} />}
-          {activeTab === "forecast" && <ForecastTab />}
+          {activeTab === "data" && <DataTab allData={allData} />}
           {activeTab === "import" && <ImportTab />}
         </>
       )}
