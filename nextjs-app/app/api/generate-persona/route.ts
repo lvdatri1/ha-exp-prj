@@ -21,8 +21,8 @@ interface Persona {
 const PERSONAS: Record<string, Persona> = {
   single_professional: {
     name: "Single Professional",
-    description: "Young professional, works 9-5, minimal home usage during day",
-    dailyAverage: 8,
+    description: "Young professional, works 9-5, electric hot water cylinder",
+    dailyAverage: 15,
     patterns: {
       weekday: {
         night: 0.15,
@@ -41,8 +41,8 @@ const PERSONAS: Record<string, Persona> = {
 
   couple_no_kids: {
     name: "Couple (No Kids)",
-    description: "Two working professionals, modern appliances",
-    dailyAverage: 12,
+    description: "Two working professionals, modern appliances, electric hot water",
+    dailyAverage: 25,
     patterns: {
       weekday: {
         night: 0.2,
@@ -61,8 +61,8 @@ const PERSONAS: Record<string, Persona> = {
 
   small_family: {
     name: "Small Family (2 Adults + 1-2 Kids)",
-    description: "Working parents with young children, moderate usage",
-    dailyAverage: 18,
+    description: "Working parents with young children, electric hot water, heat pump",
+    dailyAverage: 35,
     patterns: {
       weekday: {
         night: 0.25,
@@ -81,8 +81,8 @@ const PERSONAS: Record<string, Persona> = {
 
   large_family: {
     name: "Large Family (2 Adults + 3+ Kids)",
-    description: "Busy household with multiple children, high usage",
-    dailyAverage: 25,
+    description: "Busy household with multiple children, high hot water usage, heating",
+    dailyAverage: 50,
     patterns: {
       weekday: {
         night: 0.3,
@@ -101,8 +101,8 @@ const PERSONAS: Record<string, Persona> = {
 
   retired_couple: {
     name: "Retired Couple",
-    description: "Home most of the day, consistent usage pattern",
-    dailyAverage: 15,
+    description: "Home most of the day, electric heating, consistent hot water usage",
+    dailyAverage: 28,
     patterns: {
       weekday: {
         night: 0.2,
@@ -121,8 +121,8 @@ const PERSONAS: Record<string, Persona> = {
 
   work_from_home: {
     name: "Work From Home Household",
-    description: "One or more people working from home, consistent daytime usage",
-    dailyAverage: 20,
+    description: "One or more people working from home, high daytime usage, heating/cooling",
+    dailyAverage: 40,
     patterns: {
       weekday: {
         night: 0.25,
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { personaKey, startDate, endDate, clearExisting } = await request.json();
+    const { personaKey, startDate, endDate, clearExisting, hasGas } = await request.json();
 
     if (!personaKey || !PERSONAS[personaKey]) {
       return NextResponse.json({ error: "Invalid persona" }, { status: 400 });
@@ -178,7 +178,8 @@ export async function POST(request: NextRequest) {
       personaKey,
       parseInt(userId),
       startDate || "2024-01-01",
-      endDate || "2024-12-31"
+      endDate || "2024-12-31",
+      hasGas || false
     );
 
     // Insert data
@@ -224,9 +225,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function generatePersonaData(personaKey: string, userId: number, startDate: string, endDate: string) {
+function generatePersonaData(
+  personaKey: string,
+  userId: number,
+  startDate: string,
+  endDate: string,
+  hasGas: boolean = false
+) {
   const persona = PERSONAS[personaKey];
   const records: any[] = [];
+
+  // Gas adjustment: reduce electrical consumption by 20-30% if household has gas
+  // Gas is typically used for cooking (5-10% reduction) and/or heating (15-20% reduction)
+  const gasReductionFactor = hasGas ? 0.75 : 1.0; // 25% reduction if has gas
 
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -249,7 +260,7 @@ function generatePersonaData(personaKey: string, userId: number, startDate: stri
       seasonalMultiplier = 0.9; // Fall
     }
 
-    const dailyTotal = persona.dailyAverage * seasonalMultiplier;
+    const dailyTotal = persona.dailyAverage * seasonalMultiplier * gasReductionFactor;
     let cumulativeKwh = 0;
 
     for (let hour = 0; hour < 24; hour++) {

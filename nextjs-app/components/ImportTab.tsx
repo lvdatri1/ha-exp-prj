@@ -34,6 +34,7 @@ export default function ImportTab() {
   const [startDate, setStartDate] = useState("2024-01-01");
   const [endDate, setEndDate] = useState("2024-12-31");
   const [clearExisting, setClearExisting] = useState(true);
+  const [hasGas, setHasGas] = useState(false);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -135,6 +136,7 @@ export default function ImportTab() {
           startDate,
           endDate,
           clearExisting,
+          hasGas,
         }),
       });
 
@@ -240,6 +242,23 @@ export default function ImportTab() {
                 }}
               />
             </div>
+          </div>
+
+          <div className="form-group checkbox-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={hasGas}
+                onChange={(e) => setHasGas(e.target.checked)}
+                disabled={generating}
+              />
+              <span>Household has gas for cooking/heating</span>
+            </label>
+            <small className="help-text">
+              {hasGas
+                ? "🔥 Energy consumption will be reduced (gas used for cooking and/or heating)"
+                : "⚡ All energy needs are electric (cooking, heating, etc.)"}
+            </small>
           </div>
 
           <div className="form-group checkbox-group">

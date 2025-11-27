@@ -25,8 +25,9 @@ interface ChartsTabProps {
 export default function ChartsTab({ allData }: ChartsTabProps) {
   const [dailyTotals, setDailyTotals] = useState<Record<string, number>>({});
   const [selectedDate, setSelectedDate] = useState("");
-  const [drillDownMode, setDrillDownMode] = useState<"monthly" | "daily" | "hourly">("monthly");
-  const [drillDownMonth, setDrillDownMonth] = useState("");
+  const [viewMode, setViewMode] = useState<"monthly" | "daily" | "hourly">("monthly");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedDay, setSelectedDay] = useState("");
 
   useEffect(() => {
     loadDailyTotals();
@@ -75,13 +76,24 @@ export default function ChartsTab({ allData }: ChartsTabProps) {
     };
   }, [dailyTotals]);
 
-  // Daily chart data
+  // Daily chart data (filtered by selected month if in daily view)
   const dailyChartData = useMemo(() => {
-    const dailyLabels = Object.keys(dailyTotals).sort();
-    const dailyValues = dailyLabels.map((date) => dailyTotals[date]);
+    let filteredDates = Object.keys(dailyTotals).sort();
+
+    if (viewMode === "daily" && selectedMonth) {
+      filteredDates = filteredDates.filter((date) => date.startsWith(selectedMonth));
+    }
+
+    const dailyValues = filteredDates.map((date) => dailyTotals[date]);
+
+    // Format labels to show day of month
+    const formattedLabels = filteredDates.map((date) => {
+      const d = new Date(date);
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    });
 
     return {
-      labels: dailyLabels,
+      labels: formattedLabels,
       datasets: [
         {
           label: "Daily Energy (kWh)",
@@ -92,8 +104,35 @@ export default function ChartsTab({ allData }: ChartsTabProps) {
           fill: true,
         },
       ],
+      dateKeys: filteredDates,
     };
-  }, [dailyTotals]);
+  }, [dailyTotals, viewMode, selectedMonth]);
+
+  // Hourly data for selected day
+  const hourlyChartData = useMemo(() => {
+    if (!selectedDay) return null;
+
+    const dayData = allData.filter((item) => item.date === selectedDay);
+    const hourlyData = Array(24).fill(0);
+
+    dayData.forEach((item) => {
+      const hour = new Date(item.startTime).getHours();
+      hourlyData[hour] += item.kwh;
+    });
+
+    return {
+      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+      datasets: [
+        {
+          label: `Hourly Usage on ${selectedDay} (kWh)`,
+          data: hourlyData,
+          backgroundColor: "rgba(102, 126, 234, 0.8)",
+          borderColor: "#667eea",
+          borderWidth: 2,
+        },
+      ],
+    };
+  }, [allData, selectedDay]);
 
   // Hourly distribution data
   const hourlyDistData = useMemo(() => {
@@ -188,8 +227,24 @@ export default function ChartsTab({ allData }: ChartsTabProps) {
 
   const barOptions: ChartOptions<"bar"> = {
     responsive: true,
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        if (viewMode === "monthly") {
+          // Click on monthly chart - drill down to daily view
+          const monthKey = monthlyChartData.monthlyLabels[index];
+          setSelectedMonth(monthKey);
+          setViewMode("daily");
+        }
+      }
+    },
     plugins: {
       legend: { display: true },
+      tooltip: {
+        callbacks: {
+          footer: () => (viewMode === "monthly" ? "Click to see daily breakdown" : ""),
+        },
+      },
     },
     scales: {
       y: {
@@ -200,49 +255,151 @@ export default function ChartsTab({ allData }: ChartsTabProps) {
 
   const lineOptions: ChartOptions<"line"> = {
     responsive: true,
+    onClick: (event, elements) => {
+      if (elements.length > 0 && viewMode === "daily") {
+        const index = elements[0].index;
+        const dateKey = dailyChartData.dateKeys[index];
+        setSelectedDay(dateKey);
+        setViewMode("hourly");
+      }
+    },
+    plugins: {
+      legend: { display: true },
+      tooltip: {
+        callbacks: {
+          footer: () => (viewMode === "daily" ? "Click to see hourly breakdown" : ""),
+        },
+      },
+    },
+  };
+
+  const hourlyBarOptions: ChartOptions<"bar"> = {
+    responsive: true,
     plugins: {
       legend: { display: true },
     },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
+  const handleBackToMonthly = () => {
+    setViewMode("monthly");
+    setSelectedMonth("");
+    setSelectedDay("");
+  };
+
+  const handleBackToDaily = () => {
+    setViewMode("daily");
+    setSelectedDay("");
   };
 
   return (
     <div className="tab-content active">
       <div style={{ marginBottom: "20px" }}>
-        <p style={{ color: "#666", fontSize: "0.95rem" }}>
-          💡 Click on a month bar to see daily usage, then click on a day to see 24-hour breakdown
-        </p>
+        {viewMode === "monthly" && (
+          <p style={{ color: "#666", fontSize: "0.95rem" }}>💡 Click on a month bar to see daily usage breakdown</p>
+        )}
+        {viewMode === "daily" && (
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            <button
+              onClick={handleBackToMonthly}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#667eea",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              ← Back to Monthly View
+            </button>
+            <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>
+              💡 Viewing {selectedMonth} - Click on a day to see hourly usage
+            </p>
+          </div>
+        )}
+        {viewMode === "hourly" && (
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            <button
+              onClick={handleBackToDaily}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#667eea",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              ← Back to Daily View
+            </button>
+            <button
+              onClick={handleBackToMonthly}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#764ba2",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              ← Back to Monthly View
+            </button>
+            <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>📊 Viewing 24-hour usage for {selectedDay}</p>
+          </div>
+        )}
       </div>
 
       <TariffCalculator allData={allData} />
 
-      <div className="chart-container">
-        <h3 style={{ marginBottom: "15px", color: "#333" }}>Monthly Energy Consumption</h3>
-        <Bar data={monthlyChartData} options={barOptions} />
-      </div>
-
-      <div className="chart-container">
-        <h3 style={{ marginBottom: "15px", color: "#333" }}>Daily Energy Consumption</h3>
-        <Line data={dailyChartData} options={lineOptions} />
-      </div>
-
-      <div className="chart-container">
-        <h3 style={{ marginBottom: "15px", color: "#333" }}>Hourly Distribution</h3>
-        <Bar data={hourlyDistData} options={barOptions} />
-      </div>
-
-      <div className="chart-container">
-        <h3 style={{ marginBottom: "15px", color: "#333" }}>Day of Week Pattern</h3>
-        <Bar data={dowData} options={barOptions} />
-      </div>
-
-      <div className="chart-container">
-        <h3 style={{ marginBottom: "15px", color: "#333" }}>24-Hour Usage by Date</h3>
-        <div className="controls" style={{ marginBottom: "15px" }}>
-          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-          <button onClick={() => setSelectedDate("")}>Clear</button>
+      {viewMode === "monthly" && (
+        <div className="chart-container">
+          <h3 style={{ marginBottom: "15px", color: "#333" }}>Monthly Energy Consumption</h3>
+          <Bar data={monthlyChartData} options={barOptions} />
         </div>
-        {hourlyUsageData && <Bar data={hourlyUsageData} options={barOptions} />}
-      </div>
+      )}
+
+      {viewMode === "daily" && (
+        <div className="chart-container">
+          <h3 style={{ marginBottom: "15px", color: "#333" }}>Daily Energy Consumption - {selectedMonth}</h3>
+          <Line data={dailyChartData} options={lineOptions} />
+        </div>
+      )}
+
+      {viewMode === "hourly" && hourlyChartData && (
+        <div className="chart-container">
+          <h3 style={{ marginBottom: "15px", color: "#333" }}>24-Hour Usage - {selectedDay}</h3>
+          <Bar data={hourlyChartData} options={hourlyBarOptions} />
+        </div>
+      )}
+
+      {viewMode === "monthly" && (
+        <>
+          <div className="chart-container">
+            <h3 style={{ marginBottom: "15px", color: "#333" }}>Hourly Distribution</h3>
+            <Bar data={hourlyDistData} options={hourlyBarOptions} />
+          </div>
+
+          <div className="chart-container">
+            <h3 style={{ marginBottom: "15px", color: "#333" }}>Day of Week Pattern</h3>
+            <Bar data={dowData} options={hourlyBarOptions} />
+          </div>
+
+          <div className="chart-container">
+            <h3 style={{ marginBottom: "15px", color: "#333" }}>24-Hour Usage by Date</h3>
+            <div className="controls" style={{ marginBottom: "15px" }}>
+              <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+              <button onClick={() => setSelectedDate("")}>Clear</button>
+            </div>
+            {hourlyUsageData && <Bar data={hourlyUsageData} options={hourlyBarOptions} />}
+          </div>
+        </>
+      )}
     </div>
   );
 }
