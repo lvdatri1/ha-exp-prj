@@ -20,9 +20,10 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 
 interface ChartsTabProps {
   allData: any[];
+  gasData?: any[];
 }
 
-export default function ChartsTab({ allData }: ChartsTabProps) {
+export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
   const [dailyTotals, setDailyTotals] = useState<Record<string, number>>({});
   const [selectedDate, setSelectedDate] = useState("");
   const [viewMode, setViewMode] = useState<"monthly" | "daily" | "hourly">("monthly");
@@ -355,7 +356,7 @@ export default function ChartsTab({ allData }: ChartsTabProps) {
         )}
       </div>
 
-      <TariffCalculator allData={allData} />
+      <TariffCalculator allData={allData} gasData={gasData} />
 
       {viewMode === "monthly" && (
         <div className="chart-container">

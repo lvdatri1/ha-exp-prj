@@ -4,17 +4,41 @@ import { useState, useMemo } from "react";
 
 interface DataTabProps {
   allData: any[];
+  gasData?: any[];
 }
 
-export default function DataTab({ allData }: DataTabProps) {
+export default function DataTab({ allData, gasData = [] }: DataTabProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [filterDate, setFilterDate] = useState("");
+
+  const hasGas = gasData.length > 0;
+
+  console.log("DataTab - allData count:", allData.length);
+  console.log("DataTab - gasData count:", gasData.length);
+  console.log("DataTab - hasGas:", hasGas);
+  if (gasData.length > 0) {
+    console.log("DataTab - first gas record:", gasData[0]);
+  }
 
   const filteredData = useMemo(() => {
     if (!filterDate) return allData;
     return allData.filter((item) => item.date === filterDate);
   }, [allData, filterDate]);
+
+  const filteredGasData = useMemo(() => {
+    if (!filterDate) return gasData;
+    return gasData.filter((item) => item.date === filterDate);
+  }, [gasData, filterDate]);
+
+  // Create a map of gas data by startTime for easy lookup
+  const gasDataMap = useMemo(() => {
+    const map = new Map();
+    filteredGasData.forEach((item) => {
+      map.set(item.startTime, item.kwh);
+    });
+    return map;
+  }, [filteredGasData]);
 
   const stats = useMemo(() => {
     const total = filteredData.length;
@@ -22,8 +46,13 @@ export default function DataTab({ allData }: DataTabProps) {
     const avgKwh = total > 0 ? totalKwh / total : 0;
     const peakKwh = total > 0 ? Math.max(...filteredData.map((item) => item.kwh)) : 0;
 
-    return { total, totalKwh, avgKwh, peakKwh };
-  }, [filteredData]);
+    const gasTotal = filteredGasData.length;
+    const totalGasKwh = filteredGasData.reduce((sum, item) => sum + item.kwh, 0);
+    const avgGasKwh = gasTotal > 0 ? totalGasKwh / gasTotal : 0;
+    const peakGasKwh = gasTotal > 0 ? Math.max(...filteredGasData.map((item) => item.kwh)) : 0;
+
+    return { total, totalKwh, avgKwh, peakKwh, totalGasKwh, avgGasKwh, peakGasKwh };
+  }, [filteredData, filteredGasData]);
 
   const pageData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -46,12 +75,19 @@ export default function DataTab({ allData }: DataTabProps) {
   }
 
   function exportCSV() {
-    const csv = [
-      ["Start Time", "End Time", "kWh"],
-      ...filteredData.map((item) => [formatDateTime(item.startTime), formatDateTime(item.endTime), item.kwh]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
+    const headers = hasGas
+      ? ["Start Time", "End Time", "Electricity kWh", "Gas kWh"]
+      : ["Start Time", "End Time", "kWh"];
+    const rows = filteredData.map((item) => {
+      const row = [formatDateTime(item.startTime), formatDateTime(item.endTime), item.kwh];
+      if (hasGas) {
+        const gasKwh = gasDataMap.get(item.startTime) || 0;
+        row.push(gasKwh);
+      }
+      return row;
+    });
+
+    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -69,17 +105,33 @@ export default function DataTab({ allData }: DataTabProps) {
           <div className="value">{stats.total.toLocaleString()}</div>
         </div>
         <div className="stat-card">
-          <h3>Total Energy</h3>
+          <h3>Total Electricity</h3>
           <div className="value">{stats.totalKwh.toFixed(2)} kWh</div>
         </div>
         <div className="stat-card">
-          <h3>Average kWh</h3>
+          <h3>Average Electricity</h3>
           <div className="value">{stats.avgKwh.toFixed(2)} kWh</div>
         </div>
         <div className="stat-card">
-          <h3>Peak kWh</h3>
+          <h3>Peak Electricity</h3>
           <div className="value">{stats.peakKwh.toFixed(2)} kWh</div>
         </div>
+        {hasGas && (
+          <>
+            <div className="stat-card">
+              <h3>Total Gas</h3>
+              <div className="value">{stats.totalGasKwh.toFixed(2)} kWh</div>
+            </div>
+            <div className="stat-card">
+              <h3>Average Gas</h3>
+              <div className="value">{stats.avgGasKwh.toFixed(2)} kWh</div>
+            </div>
+            <div className="stat-card">
+              <h3>Peak Gas</h3>
+              <div className="value">{stats.peakGasKwh.toFixed(2)} kWh</div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="controls">
@@ -106,17 +158,22 @@ export default function DataTab({ allData }: DataTabProps) {
           <tr>
             <th>Start Time</th>
             <th>End Time</th>
-            <th>kWh</th>
+            <th>Electricity kWh</th>
+            {hasGas && <th>Gas kWh</th>}
           </tr>
         </thead>
         <tbody>
-          {pageData.map((item, index) => (
-            <tr key={index}>
-              <td>{formatDateTime(item.startTime)}</td>
-              <td>{formatDateTime(item.endTime)}</td>
-              <td>{item.kwh.toFixed(4)}</td>
-            </tr>
-          ))}
+          {pageData.map((item, index) => {
+            const gasKwh = hasGas ? gasDataMap.get(item.startTime) : null;
+            return (
+              <tr key={index}>
+                <td>{formatDateTime(item.startTime)}</td>
+                <td>{formatDateTime(item.endTime)}</td>
+                <td>{item.kwh.toFixed(4)}</td>
+                {hasGas && <td>{gasKwh ? gasKwh.toFixed(4) : "0.0000"}</td>}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

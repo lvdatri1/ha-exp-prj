@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 
 interface TariffCalculatorProps {
   allData: any[];
+  gasData?: any[];
 }
 
 interface PeakPeriod {
@@ -77,12 +78,15 @@ const DEFAULT_SCHEDULE: WeekSchedule = {
   sunday: { enabled: true, allOffPeak: true, peakPeriods: [] },
 };
 
-export default function TariffCalculator({ allData }: TariffCalculatorProps) {
+export default function TariffCalculator({ allData, gasData = [] }: TariffCalculatorProps) {
   const [compareMode, setCompareMode] = useState(false);
+  const hasGas = gasData.length > 0;
 
   // Tariff 1
   const [isFlatRate, setIsFlatRate] = useState(false);
   const [flatRate, setFlatRate] = useState(0.3);
+  const [gasRate, setGasRate] = useState(0.15);
+  const [gasDailyCharge, setGasDailyCharge] = useState(0.5);
   const [schedule, setSchedule] = useState<WeekSchedule>(DEFAULT_SCHEDULE);
   const [peakRate, setPeakRate] = useState(0.38);
   const [offPeakRate, setOffPeakRate] = useState(0.25);
@@ -93,6 +97,8 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
   // Tariff 2 (for comparison)
   const [isFlatRate2, setIsFlatRate2] = useState(false);
   const [flatRate2, setFlatRate2] = useState(0.3);
+  const [gasRate2, setGasRate2] = useState(0.15);
+  const [gasDailyCharge2, setGasDailyCharge2] = useState(0.5);
   const [schedule2, setSchedule2] = useState<WeekSchedule>(DEFAULT_SCHEDULE);
   const [peakRate2, setPeakRate2] = useState(0.35);
   const [offPeakRate2, setOffPeakRate2] = useState(0.22);
@@ -113,14 +119,19 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
     }
   }, [
     allData,
+    gasData,
     isFlatRate,
     flatRate,
+    gasRate,
+    gasDailyCharge,
     schedule,
     peakRate,
     offPeakRate,
     dailyCharge,
     isFlatRate2,
     flatRate2,
+    gasRate2,
+    gasDailyCharge2,
     schedule2,
     peakRate2,
     offPeakRate2,
@@ -175,14 +186,22 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
   function calculateCosts() {
     if (!allData || allData.length === 0) return;
 
-    const result = calculateCostsForTariff(isFlatRate, flatRate, schedule, peakRate, offPeakRate, dailyCharge);
+    const result = calculateCostsForTariff(isFlatRate, flatRate, schedule, peakRate, offPeakRate, dailyCharge, gasRate);
     setCostData(result);
   }
 
   function calculateCosts2() {
     if (!allData || allData.length === 0) return;
 
-    const result = calculateCostsForTariff(isFlatRate2, flatRate2, schedule2, peakRate2, offPeakRate2, dailyCharge2);
+    const result = calculateCostsForTariff(
+      isFlatRate2,
+      flatRate2,
+      schedule2,
+      peakRate2,
+      offPeakRate2,
+      dailyCharge2,
+      gasRate2
+    );
     setCostData2(result);
   }
 
@@ -192,11 +211,13 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
     tariffSchedule: WeekSchedule,
     tariffPeakRate: number,
     tariffOffPeakRate: number,
-    tariffDailyCharge: number
+    tariffDailyCharge: number,
+    tariffGasRate: number,
+    tariffGasDailyCharge: number
   ) {
     if (!allData || allData.length === 0) return null;
 
-    // Group by date
+    // Group electricity by date
     const byDate: Record<string, { peakKwh: number; offPeakKwh: number }> = {};
     allData.forEach((item) => {
       const start = new Date(item.startTime);
@@ -223,9 +244,22 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
       }
     });
 
+    // Group gas by date
+    const gasByDate: Record<string, number> = {};
+    if (hasGas && gasData && gasData.length > 0) {
+      gasData.forEach((item) => {
+        const start = new Date(item.startTime);
+        const dateKey = start.toISOString().split("T")[0];
+        if (!gasByDate[dateKey]) {
+          gasByDate[dateKey] = 0;
+        }
+        gasByDate[dateKey] += item.kwh;
+      });
+    }
+
     // Monthly aggregation
     const monthly: Record<string, any> = {};
-    const yearly = { peakCost: 0, offPeakCost: 0, dailyCharge: 0, total: 0 };
+    const yearly = { peakCost: 0, offPeakCost: 0, gasCost: 0, dailyCharge: 0, gasDailyCharge: 0, total: 0 };
 
     Object.keys(byDate)
       .sort()
@@ -233,33 +267,41 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
         const [y, m] = dateKey.split("-");
         const mKey = `${y}-${m}`;
 
-        let peakCost, offPeakCost, totalDay;
+        let peakCost, offPeakCost, gasCost, gasDailyChargeDay, totalDay;
 
         if (isFlatRateMode) {
           // Flat rate mode: all kWh at same rate
           const totalKwh = byDate[dateKey].peakKwh + byDate[dateKey].offPeakKwh;
           peakCost = 0;
           offPeakCost = totalKwh * flatRateValue;
-          totalDay = offPeakCost + tariffDailyCharge;
+          gasCost = (gasByDate[dateKey] || 0) * tariffGasRate;
+          gasDailyChargeDay = gasByDate[dateKey] ? tariffGasDailyCharge : 0;
+          totalDay = offPeakCost + gasCost + tariffDailyCharge + gasDailyChargeDay;
         } else {
           // Peak/Off-peak mode
           peakCost = byDate[dateKey].peakKwh * tariffPeakRate;
           offPeakCost = byDate[dateKey].offPeakKwh * tariffOffPeakRate;
-          totalDay = peakCost + offPeakCost + tariffDailyCharge;
+          gasCost = (gasByDate[dateKey] || 0) * tariffGasRate;
+          gasDailyChargeDay = gasByDate[dateKey] ? tariffGasDailyCharge : 0;
+          totalDay = peakCost + offPeakCost + gasCost + tariffDailyCharge + gasDailyChargeDay;
         }
 
         if (!monthly[mKey]) {
-          monthly[mKey] = { peakCost: 0, offPeakCost: 0, dailyCharge: 0, total: 0 };
+          monthly[mKey] = { peakCost: 0, offPeakCost: 0, gasCost: 0, dailyCharge: 0, gasDailyCharge: 0, total: 0 };
         }
 
         monthly[mKey].peakCost += peakCost;
         monthly[mKey].offPeakCost += offPeakCost;
+        monthly[mKey].gasCost += gasCost;
         monthly[mKey].dailyCharge += tariffDailyCharge;
+        monthly[mKey].gasDailyCharge += gasDailyChargeDay;
         monthly[mKey].total += totalDay;
 
         yearly.peakCost += peakCost;
         yearly.offPeakCost += offPeakCost;
+        yearly.gasCost += gasCost;
         yearly.dailyCharge += tariffDailyCharge;
+        yearly.gasDailyCharge += gasDailyChargeDay;
         yearly.total += totalDay;
       });
 
@@ -380,6 +422,10 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
     setTariffIsFlatRate: (v: boolean) => void,
     tariffFlatRate: number,
     setTariffFlatRate: (v: number) => void,
+    tariffGasRate: number,
+    setTariffGasRate: (v: number) => void,
+    tariffGasDailyCharge: number,
+    setTariffGasDailyCharge: (v: number) => void,
     tariffPeakRate: number,
     setTariffPeakRate: (v: number) => void,
     tariffOffPeakRate: number,
@@ -431,7 +477,9 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
           }}
         >
           <div>
-            <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Flat Rate (NZD/kWh)</label>
+            <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
+              Electricity Flat Rate (NZD/kWh)
+            </label>
             <input
               type="number"
               step="0.001"
@@ -441,9 +489,37 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
             />
             <small style={{ color: "#666", fontSize: "0.85rem" }}>Same rate for all hours, all days</small>
           </div>
+          {hasGas && (
+            <div>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Gas Rate (NZD/kWh)</label>
+              <input
+                type="number"
+                step="0.001"
+                value={tariffGasRate}
+                onChange={(e) => setTariffGasRate(parseFloat(e.target.value))}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
+              />
+              <small style={{ color: "#666", fontSize: "0.85rem" }}>Gas consumption rate</small>
+            </div>
+          )}
+          {hasGas && (
+            <div>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
+                Gas Daily Charge (NZD/day)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={tariffGasDailyCharge}
+                onChange={(e) => setTariffGasDailyCharge(parseFloat(e.target.value))}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
+              />
+              <small style={{ color: "#666", fontSize: "0.85rem" }}>Gas fixed daily charge</small>
+            </div>
+          )}
           <div>
             <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-              Daily Fixed Charge (NZD/day)
+              Electricity Daily Charge (NZD/day)
             </label>
             <input
               type="number"
@@ -466,7 +542,9 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
             }}
           >
             <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Peak Rate (NZD/kWh)</label>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
+                Electricity Peak Rate (NZD/kWh)
+              </label>
               <input
                 type="number"
                 step="0.001"
@@ -476,7 +554,9 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
               />
             </div>
             <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Off-Peak Rate (NZD/kWh)</label>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
+                Electricity Off-Peak Rate (NZD/kWh)
+              </label>
               <input
                 type="number"
                 step="0.001"
@@ -485,9 +565,37 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
                 style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
               />
             </div>
+            {hasGas && (
+              <div>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Gas Rate (NZD/kWh)</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  value={tariffGasRate}
+                  onChange={(e) => setTariffGasRate(parseFloat(e.target.value))}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
+                />
+                <small style={{ color: "#666", fontSize: "0.85rem" }}>Gas consumption rate</small>
+              </div>
+            )}
+            {hasGas && (
+              <div>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
+                  Gas Daily Charge (NZD/day)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={tariffGasDailyCharge}
+                  onChange={(e) => setTariffGasDailyCharge(parseFloat(e.target.value))}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
+                />
+                <small style={{ color: "#666", fontSize: "0.85rem" }}>Gas fixed daily charge</small>
+              </div>
+            )}
             <div>
               <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-                Daily Fixed Charge (NZD/day)
+                Electricity Daily Charge (NZD/day)
               </label>
               <input
                 type="number"
@@ -687,6 +795,10 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
               setIsFlatRate,
               flatRate,
               setFlatRate,
+              gasRate,
+              setGasRate,
+              gasDailyCharge,
+              setGasDailyCharge,
               peakRate,
               setPeakRate,
               offPeakRate,
@@ -712,6 +824,10 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
               setIsFlatRate2,
               flatRate2,
               setFlatRate2,
+              gasRate2,
+              setGasRate2,
+              gasDailyCharge2,
+              setGasDailyCharge2,
               peakRate2,
               setPeakRate2,
               offPeakRate2,
@@ -736,6 +852,10 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
           setIsFlatRate,
           flatRate,
           setFlatRate,
+          gasRate,
+          setGasRate,
+          gasDailyCharge,
+          setGasDailyCharge,
           peakRate,
           setPeakRate,
           offPeakRate,
@@ -853,6 +973,7 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
                   <th>Month</th>
                   <th>Peak Cost (NZD)</th>
                   <th>Off-Peak Cost (NZD)</th>
+                  {hasGas && <th>Gas Cost (NZD)</th>}
                   <th>Daily Charges (NZD)</th>
                   <th>Total (NZD)</th>
                 </tr>
@@ -872,6 +993,7 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
                         <td>{label}</td>
                         <td>{costData.monthly[mKey].peakCost.toFixed(2)}</td>
                         <td>{costData.monthly[mKey].offPeakCost.toFixed(2)}</td>
+                        {hasGas && <td>{costData.monthly[mKey].gasCost.toFixed(2)}</td>}
                         <td>{costData.monthly[mKey].dailyCharge.toFixed(2)}</td>
                         <td>
                           <strong>{costData.monthly[mKey].total.toFixed(2)}</strong>
@@ -890,7 +1012,8 @@ export default function TariffCalculator({ allData }: TariffCalculatorProps) {
               }}
             >
               <strong>Yearly Total:</strong> NZD {costData.yearly.total.toFixed(2)} (Peak:{" "}
-              {costData.yearly.peakCost.toFixed(2)}, Off-Peak: {costData.yearly.offPeakCost.toFixed(2)}, Daily Charges:{" "}
+              {costData.yearly.peakCost.toFixed(2)}, Off-Peak: {costData.yearly.offPeakCost.toFixed(2)}
+              {hasGas && `, Gas: ${costData.yearly.gasCost.toFixed(2)}`}, Daily Charges:{" "}
               {costData.yearly.dailyCharge.toFixed(2)})
             </div>
           </>

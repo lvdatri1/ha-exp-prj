@@ -16,6 +16,7 @@ interface User {
 export default function Home() {
   const [activeTab, setActiveTab] = useState("charts");
   const [allData, setAllData] = useState<any[]>([]);
+  const [gasData, setGasData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -28,7 +29,7 @@ export default function Home() {
     if (user) {
       loadData();
     }
-  }, [user]);
+  }, [user, activeTab]);
 
   async function checkAuth() {
     try {
@@ -48,9 +49,16 @@ export default function Home() {
   async function loadData() {
     try {
       setLoading(true);
-      const response = await fetch("/api/data/all");
-      const result = await response.json();
-      setAllData(result.data || []);
+      const [electricResponse, gasResponse] = await Promise.all([fetch("/api/data/all"), fetch("/api/gas/all")]);
+
+      const electricResult = await electricResponse.json();
+      const gasResult = await gasResponse.json();
+
+      console.log("Electric data:", electricResult);
+      console.log("Gas data:", gasResult);
+
+      setAllData(electricResult.data || []);
+      setGasData(Array.isArray(gasResult) ? gasResult : []);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -63,6 +71,7 @@ export default function Home() {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
       setAllData([]);
+      setGasData([]);
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -116,8 +125,8 @@ export default function Home() {
         <div className="loading">Loading data...</div>
       ) : (
         <>
-          {activeTab === "charts" && <ChartsTab allData={allData} />}
-          {activeTab === "data" && <DataTab allData={allData} />}
+          {activeTab === "charts" && <ChartsTab allData={allData} gasData={gasData} />}
+          {activeTab === "data" && <DataTab allData={allData} gasData={gasData} />}
           {activeTab === "import" && <ImportTab />}
         </>
       )}

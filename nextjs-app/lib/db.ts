@@ -41,16 +41,49 @@ function initializeSchema() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS gas_data (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
+      kwh REAL NOT NULL,
+      date TEXT NOT NULL,
+      hour INTEGER NOT NULL,
+      minute INTEGER NOT NULL,
+      is_daily_total INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_user_id ON energy_data(user_id);
     CREATE INDEX IF NOT EXISTS idx_date ON energy_data(date);
     CREATE INDEX IF NOT EXISTS idx_start_time ON energy_data(start_time);
     CREATE INDEX IF NOT EXISTS idx_hour_minute ON energy_data(hour, minute);
     CREATE INDEX IF NOT EXISTS idx_daily_total ON energy_data(is_daily_total, date);
     CREATE INDEX IF NOT EXISTS idx_user_date ON energy_data(user_id, date);
+
+    CREATE INDEX IF NOT EXISTS idx_gas_user_id ON gas_data(user_id);
+    CREATE INDEX IF NOT EXISTS idx_gas_date ON gas_data(date);
+    CREATE INDEX IF NOT EXISTS idx_gas_start_time ON gas_data(start_time);
+    CREATE INDEX IF NOT EXISTS idx_gas_hour_minute ON gas_data(hour, minute);
+    CREATE INDEX IF NOT EXISTS idx_gas_daily_total ON gas_data(is_daily_total, date);
+    CREATE INDEX IF NOT EXISTS idx_gas_user_date ON gas_data(user_id, date);
   `);
 }
 
 export interface EnergyRecord {
+  id?: number;
+  user_id: number;
+  start_time: string;
+  end_time: string;
+  kwh: number;
+  date: string;
+  hour: number;
+  minute: number;
+  is_daily_total: number;
+}
+
+export interface GasRecord {
   id?: number;
   user_id: number;
   start_time: string;
@@ -200,3 +233,97 @@ export function clearDatabase(userId: number) {
   const db = getDb();
   db.prepare("DELETE FROM energy_data WHERE user_id = ?").run(userId);
 }
+
+// Gas data operations
+export function insertGasData(records: Omit<GasRecord, "id">[], userId: number) {
+  const db = getDb();
+  const insert = db.prepare(`
+    INSERT INTO gas_data (user_id, start_time, end_time, kwh, date, hour, minute, is_daily_total)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertMany = db.transaction((records: Omit<GasRecord, "id" | "user_id">[]) => {
+    for (const record of records) {
+      insert.run(
+        userId,
+        record.start_time,
+        record.end_time,
+        record.kwh,
+        record.date,
+        record.hour,
+        record.minute,
+        record.is_daily_total
+      );
+    }
+  });
+
+  insertMany(records);
+}
+
+export function getAllGasData(userId: number) {
+  const db = getDb();
+  return db
+    .prepare(
+      `
+    SELECT id, user_id, start_time, end_time, kwh, date, hour, minute, is_daily_total
+    FROM gas_data
+    WHERE user_id = ? AND is_daily_total = 0
+    ORDER BY start_time
+  `
+    )
+    .all(userId) as GasRecord[];
+}
+
+export function getGasDailyTotals(userId: number) {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      `
+    SELECT date, kwh
+    FROM gas_data
+    WHERE user_id = ? AND hour = 23 AND minute = 30
+    ORDER BY date
+  `
+    )
+    .all(userId) as { date: string; kwh: number }[];
+
+  const totals: Record<string, number> = {};
+  rows.forEach((row) => {
+    totals[row.date] = row.kwh;
+  });
+  return totals;
+}
+
+export function getGasByDate(date: string, userId: number) {
+  const db = getDb();
+  return db
+    .prepare(
+      `
+    SELECT id, start_time, end_time, kwh, hour, minute
+    FROM gas_data
+    WHERE user_id = ? AND date = ? AND is_daily_total = 0
+    ORDER BY start_time
+  `
+    )
+    .all(userId, date) as GasRecord[];
+}
+
+export function getGasByTimeRange(startTime: string, endTime: string, userId: number) {
+  const db = getDb();
+  return db
+    .prepare(
+      `
+    SELECT id, start_time, end_time, kwh, date, hour, minute
+    FROM gas_data
+    WHERE user_id = ? AND start_time >= ? AND start_time <= ? AND is_daily_total = 0
+    ORDER BY start_time
+  `
+    )
+    .all(userId, startTime, endTime) as GasRecord[];
+}
+
+export function clearGasData(userId: number) {
+  const db = getDb();
+  db.prepare("DELETE FROM gas_data WHERE user_id = ?").run(userId);
+}
+
