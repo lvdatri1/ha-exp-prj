@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,15 +18,26 @@ import TariffCalculator from "./TariffCalculator";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
-interface ChartsTabProps {
-  allData: any[];
-  gasData?: any[];
+interface EnergyDataPoint {
+  startTime: string;
+  endTime: string;
+  kwh: number;
+  date: string;
+  hour: number;
+  minute: number;
 }
+
+interface ChartsTabProps {
+  allData: EnergyDataPoint[];
+  gasData?: EnergyDataPoint[];
+}
+
+type ViewMode = "monthly" | "daily" | "hourly";
 
 export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
   const [dailyTotals, setDailyTotals] = useState<Record<string, number>>({});
   const [selectedDate, setSelectedDate] = useState("");
-  const [viewMode, setViewMode] = useState<"monthly" | "daily" | "hourly">("monthly");
+  const [viewMode, setViewMode] = useState<ViewMode>("monthly");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
 
@@ -34,7 +45,7 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     loadDailyTotals();
   }, []);
 
-  async function loadDailyTotals() {
+  const loadDailyTotals = useCallback(async () => {
     try {
       const response = await fetch("/api/data/daily-totals");
       const result = await response.json();
@@ -42,22 +53,21 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     } catch (error) {
       console.error("Error loading daily totals:", error);
     }
-  }
-
-  // Monthly chart data
+  }, []);
   const monthlyChartData = useMemo(() => {
     const monthlyData: Record<string, number> = {};
-    Object.keys(dailyTotals).forEach((dateKey) => {
+
+    Object.entries(dailyTotals).forEach(([dateKey, value]) => {
       const date = new Date(dateKey);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + dailyTotals[dateKey];
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + value;
     });
 
     const monthlyLabels = Object.keys(monthlyData).sort();
     const monthlyValues = monthlyLabels.map((month) => monthlyData[month]);
 
-    const formattedLabels = monthlyLabels.map((m) => {
-      const [year, month] = m.split("-");
+    const formattedLabels = monthlyLabels.map((monthKey) => {
+      const [year, month] = monthKey.split("-");
       const date = new Date(parseInt(year), parseInt(month) - 1, 1);
       return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
     });
@@ -77,7 +87,6 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     };
   }, [dailyTotals]);
 
-  // Daily chart data (filtered by selected month if in daily view)
   const dailyChartData = useMemo(() => {
     let filteredDates = Object.keys(dailyTotals).sort();
 
@@ -86,8 +95,6 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     }
 
     const dailyValues = filteredDates.map((date) => dailyTotals[date]);
-
-    // Format labels to show day of month
     const formattedLabels = filteredDates.map((date) => {
       const d = new Date(date);
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -109,20 +116,21 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     };
   }, [dailyTotals, viewMode, selectedMonth]);
 
-  // Hourly data for selected day
   const hourlyChartData = useMemo(() => {
     if (!selectedDay) return null;
 
+    const hourlyData = new Array(24).fill(0);
     const dayData = allData.filter((item) => item.date === selectedDay);
-    const hourlyData = Array(24).fill(0);
 
     dayData.forEach((item) => {
       const hour = new Date(item.startTime).getHours();
-      hourlyData[hour] += item.kwh;
+      if (hour >= 0 && hour < 24) {
+        hourlyData[hour] += item.kwh;
+      }
     });
 
     return {
-      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+      labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
       datasets: [
         {
           label: `Hourly Usage on ${selectedDay} (kWh)`,
@@ -135,29 +143,28 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     };
   }, [allData, selectedDay]);
 
-  // Hourly distribution data
   const hourlyDistData = useMemo(() => {
-    const hourlyData = Array(24).fill(0);
-    const hourlyDateSets = Array(24)
-      .fill(null)
-      .map(() => new Set<string>());
+    const hourlyTotals = new Array(24).fill(0);
+    const hourlyDateSets = Array.from({ length: 24 }, () => new Set<string>());
 
     allData.forEach((item) => {
       const date = new Date(item.startTime);
       const hour = date.getHours();
       const dateKey = date.toISOString().split("T")[0];
 
-      hourlyData[hour] += item.kwh;
-      hourlyDateSets[hour].add(dateKey);
+      if (hour >= 0 && hour < 24) {
+        hourlyTotals[hour] += item.kwh;
+        hourlyDateSets[hour].add(dateKey);
+      }
     });
 
-    const hourlyAvg = hourlyData.map((total, hour) => {
+    const hourlyAvg = hourlyTotals.map((total, hour) => {
       const dayCount = hourlyDateSets[hour].size;
       return dayCount > 0 ? total / dayCount : 0;
     });
 
     return {
-      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+      labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
       datasets: [
         {
           label: "Average kWh per Hour",
@@ -170,15 +177,14 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     };
   }, [allData]);
 
-  // Day of week pattern
   const dowData = useMemo(() => {
-    const dowTotals = Array(7).fill(0);
-    const dowCounts = Array(7).fill(0);
+    const dowTotals = new Array(7).fill(0);
+    const dowCounts = new Array(7).fill(0);
 
-    Object.keys(dailyTotals).forEach((dateKey) => {
+    Object.entries(dailyTotals).forEach(([dateKey, value]) => {
       const date = new Date(dateKey);
       const dow = date.getDay();
-      dowTotals[dow] += dailyTotals[dateKey];
+      dowTotals[dow] += value;
       dowCounts[dow]++;
     });
 
@@ -200,20 +206,21 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     };
   }, [dailyTotals]);
 
-  // 24-hour usage for selected date
   const hourlyUsageData = useMemo(() => {
     if (!selectedDate) return null;
 
+    const hourlyData = new Array(24).fill(0);
     const dayData = allData.filter((item) => item.date === selectedDate);
-    const hourlyData = Array(24).fill(0);
 
     dayData.forEach((item) => {
       const hour = new Date(item.startTime).getHours();
-      hourlyData[hour] += item.kwh;
+      if (hour >= 0 && hour < 24) {
+        hourlyData[hour] += item.kwh;
+      }
     });
 
     return {
-      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+      labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
       datasets: [
         {
           label: `Energy Usage on ${selectedDate} (kWh per hour)`,
@@ -226,37 +233,20 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     };
   }, [allData, selectedDate]);
 
-  const barOptions: ChartOptions<"bar"> = {
-    responsive: true,
-    onClick: (event, elements) => {
-      if (elements.length > 0) {
+  const handleMonthlyChartClick = useCallback(
+    (event: any, elements: any[]) => {
+      if (elements.length > 0 && viewMode === "monthly") {
         const index = elements[0].index;
-        if (viewMode === "monthly") {
-          // Click on monthly chart - drill down to daily view
-          const monthKey = monthlyChartData.monthlyLabels[index];
-          setSelectedMonth(monthKey);
-          setViewMode("daily");
-        }
+        const monthKey = monthlyChartData.monthlyLabels[index];
+        setSelectedMonth(monthKey);
+        setViewMode("daily");
       }
     },
-    plugins: {
-      legend: { display: true },
-      tooltip: {
-        callbacks: {
-          footer: () => (viewMode === "monthly" ? "Click to see daily breakdown" : ""),
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
+    [viewMode, monthlyChartData.monthlyLabels]
+  );
 
-  const lineOptions: ChartOptions<"line"> = {
-    responsive: true,
-    onClick: (event, elements) => {
+  const handleDailyChartClick = useCallback(
+    (event: any, elements: any[]) => {
       if (elements.length > 0 && viewMode === "daily") {
         const index = elements[0].index;
         const dateKey = dailyChartData.dateKeys[index];
@@ -264,97 +254,125 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
         setViewMode("hourly");
       }
     },
-    plugins: {
-      legend: { display: true },
-      tooltip: {
-        callbacks: {
-          footer: () => (viewMode === "daily" ? "Click to see hourly breakdown" : ""),
-        },
-      },
-    },
-  };
+    [viewMode, dailyChartData.dateKeys]
+  );
 
-  const hourlyBarOptions: ChartOptions<"bar"> = {
-    responsive: true,
-    plugins: {
-      legend: { display: true },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
-
-  const handleBackToMonthly = () => {
+  const handleBackToMonthly = useCallback(() => {
     setViewMode("monthly");
     setSelectedMonth("");
     setSelectedDay("");
-  };
+  }, []);
 
-  const handleBackToDaily = () => {
+  const handleBackToDaily = useCallback(() => {
     setViewMode("daily");
     setSelectedDay("");
+  }, []);
+
+  const handleClearDate = useCallback(() => {
+    setSelectedDate("");
+  }, []);
+
+  const barOptions: ChartOptions<"bar"> = useMemo(
+    () => ({
+      responsive: true,
+      onClick: handleMonthlyChartClick,
+      plugins: {
+        legend: { display: true },
+        tooltip: {
+          callbacks: {
+            footer: () => (viewMode === "monthly" ? "Click to see daily breakdown" : ""),
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    }),
+    [viewMode, handleMonthlyChartClick]
+  );
+
+  const lineOptions: ChartOptions<"line"> = useMemo(
+    () => ({
+      responsive: true,
+      onClick: handleDailyChartClick,
+      plugins: {
+        legend: { display: true },
+        tooltip: {
+          callbacks: {
+            footer: () => (viewMode === "daily" ? "Click to see hourly breakdown" : ""),
+          },
+        },
+      },
+    }),
+    [viewMode, handleDailyChartClick]
+  );
+
+  const hourlyBarOptions: ChartOptions<"bar"> = useMemo(
+    () => ({
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    }),
+    []
+  );
+
+  const renderNavigationBar = () => {
+    const baseStyle = {
+      padding: "8px 16px",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "0.9rem",
+      fontWeight: "500",
+    };
+
+    if (viewMode === "monthly") {
+      return (
+        <div style={{ marginBottom: "20px" }}>
+          <p style={{ color: "#666", fontSize: "0.95rem" }}>💡 Click on a month bar to see daily usage breakdown</p>
+        </div>
+      );
+    }
+
+    if (viewMode === "daily") {
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px", flexWrap: "wrap" }}>
+          <button onClick={handleBackToMonthly} style={{ ...baseStyle, backgroundColor: "#667eea" }}>
+            ← Back to Monthly View
+          </button>
+          <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>
+            💡 Viewing {selectedMonth} - Click on a day to see hourly usage
+          </p>
+        </div>
+      );
+    }
+
+    if (viewMode === "hourly") {
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px", flexWrap: "wrap" }}>
+          <button onClick={handleBackToDaily} style={{ ...baseStyle, backgroundColor: "#667eea" }}>
+            ← Back to Daily View
+          </button>
+          <button onClick={handleBackToMonthly} style={{ ...baseStyle, backgroundColor: "#764ba2" }}>
+            ← Back to Monthly View
+          </button>
+          <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>📊 Viewing 24-hour usage for {selectedDay}</p>
+        </div>
+      );
+    }
   };
 
   return (
     <div className="tab-content active">
-      <div style={{ marginBottom: "20px" }}>
-        {viewMode === "monthly" && (
-          <p style={{ color: "#666", fontSize: "0.95rem" }}>💡 Click on a month bar to see daily usage breakdown</p>
-        )}
-        {viewMode === "daily" && (
-          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-            <button
-              onClick={handleBackToMonthly}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#667eea",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              ← Back to Monthly View
-            </button>
-            <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>
-              💡 Viewing {selectedMonth} - Click on a day to see hourly usage
-            </p>
-          </div>
-        )}
-        {viewMode === "hourly" && (
-          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-            <button
-              onClick={handleBackToDaily}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#667eea",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              ← Back to Daily View
-            </button>
-            <button
-              onClick={handleBackToMonthly}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#764ba2",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              ← Back to Monthly View
-            </button>
-            <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>📊 Viewing 24-hour usage for {selectedDay}</p>
-          </div>
-        )}
-      </div>
+      {renderNavigationBar()}
 
       <TariffCalculator allData={allData} gasData={gasData} />
 
@@ -394,8 +412,32 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
           <div className="chart-container">
             <h3 style={{ marginBottom: "15px", color: "#333" }}>24-Hour Usage by Date</h3>
             <div className="controls" style={{ marginBottom: "15px" }}>
-              <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-              <button onClick={() => setSelectedDate("")}>Clear</button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{
+                  padding: "8px 12px",
+                  border: "2px solid #ddd",
+                  borderRadius: "6px",
+                  fontSize: "1rem",
+                }}
+              />
+              <button
+                onClick={handleClearDate}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#667eea",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: "500",
+                }}
+              >
+                Clear
+              </button>
             </div>
             {hourlyUsageData && <Bar data={hourlyUsageData} options={hourlyBarOptions} />}
           </div>
