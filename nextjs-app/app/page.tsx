@@ -141,18 +141,27 @@ export default function Home() {
         }
 
         .logout-btn {
-          padding: 6px 15px;
-          background: #f5f5f5;
-          border: 1px solid #ddd;
-          border-radius: 4px;
+          padding: 8px 18px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
           cursor: pointer;
           font-size: 0.9rem;
-          transition: all 0.2s;
+          font-weight: 500;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .logout-btn:hover {
-          background: #e0e0e0;
-          border-color: #999;
+          background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+          box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .logout-btn:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
       `}</style>
     </div>
