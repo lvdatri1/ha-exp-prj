@@ -8,7 +8,8 @@
     "start": "next start -p 3000",
     "lint": "next lint",
     "db:import": "node scripts/import-csv.js",
-    "db:migrate": "node scripts/migrate-db.js"
+    "db:migrate": "node scripts/migrate-db.js",
+    "seed:plans": "node scripts/seed-power-plans.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",

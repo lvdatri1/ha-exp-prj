@@ -15,6 +15,7 @@ import {
 } from "chart.js";
 import { Line, Bar } from "react-chartjs-2";
 import TariffCalculator from "./TariffCalculator";
+import PlanSelector from "./PlanSelector";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
@@ -370,11 +371,14 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
     }
   };
 
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
   return (
     <div className="tab-content active">
       {renderNavigationBar()}
 
-      <TariffCalculator allData={allData} gasData={gasData} />
+      <PlanSelector selectedPlan={selectedPlan} onSelect={setSelectedPlan} />
+      <TariffCalculator allData={allData} gasData={gasData} selectedPlan={selectedPlan} />
 
       {viewMode === "monthly" && (
         <div className="chart-container">
