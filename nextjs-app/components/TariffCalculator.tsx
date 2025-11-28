@@ -1,4 +1,46 @@
-"use client";
+// Example static list of NZ power retailer plans (for demo purposes)
+const NZ_POWER_PLANS = [
+  {
+    name: "Mercury Anytime",
+    retailer: "Mercury",
+    isFlatRate: true,
+    flatRate: 0.32,
+    dailyCharge: 0.35,
+    hasGas: false,
+  },
+  {
+    name: "Contact Energy Basic",
+    retailer: "Contact Energy",
+    isFlatRate: false,
+    peakRate: 0.38,
+    offPeakRate: 0.22,
+    dailyCharge: 0.3,
+    hasGas: true,
+    gasFlatRate: 0.13,
+    gasDailyCharge: 0.5,
+  },
+  {
+    name: "Genesis Energy Classic",
+    retailer: "Genesis Energy",
+    isFlatRate: true,
+    flatRate: 0.34,
+    dailyCharge: 0.36,
+    hasGas: true,
+    gasFlatRate: 0.14,
+    gasDailyCharge: 0.52,
+  },
+  {
+    name: "Electric Kiwi MoveMaster",
+    retailer: "Electric Kiwi",
+    isFlatRate: false,
+    peakRate: 0.37,
+    offPeakRate: 0.19,
+    dailyCharge: 0.28,
+    hasGas: false,
+  },
+  // Add more plans as needed
+];
+("use client");
 
 import { useState, useEffect, useMemo } from "react";
 
@@ -79,6 +121,23 @@ const DEFAULT_SCHEDULE: WeekSchedule = {
 };
 
 export default function TariffCalculator({ allData, gasData = [] }: TariffCalculatorProps) {
+  const [selectedPlan, setSelectedPlan] = useState<string>("");
+  // When a plan is selected, auto-fill tariff settings
+  useEffect(() => {
+    if (!selectedPlan) return;
+    const plan = NZ_POWER_PLANS.find((p) => p.name === selectedPlan);
+    if (!plan) return;
+    setIsFlatRate(!!plan.isFlatRate);
+    if (plan.isFlatRate && plan.flatRate !== undefined) setFlatRate(plan.flatRate);
+    if (!plan.isFlatRate && plan.peakRate !== undefined) setPeakRate(plan.peakRate);
+    if (!plan.isFlatRate && plan.offPeakRate !== undefined) setOffPeakRate(plan.offPeakRate);
+    if (plan.dailyCharge !== undefined) setDailyCharge(plan.dailyCharge);
+    if (plan.hasGas) {
+      setIsGasFlatRate(true);
+      if (plan.gasFlatRate !== undefined) setGasRate(plan.gasFlatRate);
+      if (plan.gasDailyCharge !== undefined) setGasDailyCharge(plan.gasDailyCharge);
+    }
+  }, [selectedPlan]);
   // Comparison filter: 'both', 'electric', 'gas'
   const [compareType, setCompareType] = useState<"both" | "electric" | "gas">("both");
   const [compareMode, setCompareMode] = useState(false);
@@ -1234,6 +1293,23 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
       <p style={{ color: "#666", marginBottom: "15px", fontSize: "0.9rem" }}>
         Defaults: Weekdays have peak periods 7-11am & 5-9pm, weekends are all off-peak.
       </p>
+
+      {/* NZ Power Plan Selector */}
+      <div style={{ margin: "20px 0 10px 0" }}>
+        <label style={{ fontWeight: 600, marginRight: 8 }}>Select NZ Power Plan:</label>
+        <select
+          value={selectedPlan}
+          onChange={(e) => setSelectedPlan(e.target.value)}
+          style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #bbb", minWidth: 200 }}
+        >
+          <option value="">-- Choose a plan --</option>
+          {NZ_POWER_PLANS.map((plan) => (
+            <option key={plan.name} value={plan.name}>
+              {plan.retailer} - {plan.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Comparison Type Selector (for both compare and single-tariff modes) */}
       {(compareMode || costData) && (
