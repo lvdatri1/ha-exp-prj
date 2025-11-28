@@ -1,3 +1,6 @@
+"use client";
+
+import TariffSettings from "./TariffSettings";
 // Example static list of NZ power retailer plans (for demo purposes)
 const NZ_POWER_PLANS = [
   {
@@ -40,7 +43,6 @@ const NZ_POWER_PLANS = [
   },
   // Add more plans as needed
 ];
-("use client");
 
 import { useState, useEffect, useMemo } from "react";
 
@@ -122,6 +124,11 @@ const DEFAULT_SCHEDULE: WeekSchedule = {
 
 export default function TariffCalculator({ allData, gasData = [] }: TariffCalculatorProps) {
   const [selectedPlan, setSelectedPlan] = useState<string>("");
+  useEffect(() => {
+    try {
+      (window as any).NZ_POWER_PLANS = NZ_POWER_PLANS;
+    } catch {}
+  }, []);
   // When a plan is selected, auto-fill tariff settings
   useEffect(() => {
     if (!selectedPlan) return;
@@ -706,7 +713,6 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
                 Copy to All
               </button>
             </div>
-
             <div style={{ marginBottom: "8px" }}>
               <label style={{ display: "flex", alignItems: "center", cursor: "pointer", fontSize: "0.85rem" }}>
                 <input
@@ -794,346 +800,7 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
     </div>
   );
 
-  const renderTariffSettings = (
-    tariffNum: number,
-    tariffIsFlatRate: boolean,
-    setTariffIsFlatRate: (v: boolean) => void,
-    tariffFlatRate: number,
-    setTariffFlatRate: (v: number) => void,
-    tariffIsGasFlatRate: boolean,
-    setTariffIsGasFlatRate: (v: boolean) => void,
-    tariffGasRate: number,
-    setTariffGasRate: (v: number) => void,
-    tariffGasPeakRate: number,
-    setTariffGasPeakRate: (v: number) => void,
-    tariffGasOffPeakRate: number,
-    setTariffGasOffPeakRate: (v: number) => void,
-    tariffGasDailyCharge: number,
-    setTariffGasDailyCharge: (v: number) => void,
-    tariffPeakRate: number,
-    setTariffPeakRate: (v: number) => void,
-    tariffOffPeakRate: number,
-    setTariffOffPeakRate: (v: number) => void,
-    tariffDailyCharge: number,
-    setTariffDailyCharge: (v: number) => void,
-    tariffShowAdvanced: boolean,
-    setTariffShowAdvanced: (v: boolean) => void,
-    tariffShowGasAdvanced: boolean,
-    setTariffShowGasAdvanced: (v: boolean) => void,
-    tariffSchedule: WeekSchedule,
-    tariffGasSchedule: WeekSchedule,
-    updateScheduleFn: (day: string, updates: Partial<DaySchedule>) => void,
-    updateGasScheduleFn: (day: string, updates: Partial<DaySchedule>) => void,
-    addPeriodFn: (day: string) => void,
-    addGasPeriodFn: (day: string) => void,
-    removePeriodFn: (day: string, id: string) => void,
-    removeGasPeriodFn: (day: string, id: string) => void,
-    updatePeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void,
-    updateGasPeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void,
-    copyToAllFn: (day: string) => void,
-    copyGasToAllFn: (day: string) => void
-  ) => (
-    <div>
-      <h4 style={{ marginBottom: "12px", color: "#333" }}>Tariff {tariffNum}</h4>
-
-      {/* Electricity Section - Mode + Pricing */}
-      <div style={{ marginBottom: "20px", padding: "15px", background: "#f0f8ff", borderRadius: "8px" }}>
-        <h5 style={{ margin: "0 0 12px 0", color: "#1976d2", fontSize: "1rem" }}>⚡ Electricity</h5>
-
-        {/* Electricity Mode Selection */}
-        <div
-          style={{
-            marginBottom: "15px",
-            padding: "12px",
-            background: "white",
-            borderRadius: "6px",
-            border: "1px solid #e3f2fd",
-          }}
-        >
-          <label style={{ display: "flex", alignItems: "center", cursor: "pointer", marginBottom: "8px" }}>
-            <input
-              type="radio"
-              checked={!tariffIsFlatRate}
-              onChange={() => setTariffIsFlatRate(false)}
-              style={{ marginRight: "8px" }}
-            />
-            <span style={{ fontWeight: 600 }}>Peak/Off-Peak Pricing</span>
-          </label>
-          <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-            <input
-              type="radio"
-              checked={tariffIsFlatRate}
-              onChange={() => setTariffIsFlatRate(true)}
-              style={{ marginRight: "8px" }}
-            />
-            <span style={{ fontWeight: 600 }}>Flat Rate</span>
-          </label>
-        </div>
-
-        {/* Electricity Pricing */}
-        {tariffIsFlatRate ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "12px",
-            }}
-          >
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Flat Rate (NZD/kWh)</label>
-              <input
-                type="number"
-                step="0.001"
-                value={tariffFlatRate}
-                onChange={(e) => setTariffFlatRate(parseFloat(e.target.value))}
-                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-              />
-              <small style={{ color: "#666", fontSize: "0.85rem" }}>Same rate for all hours</small>
-            </div>
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-                Daily Fixed Charge (NZD/day)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={tariffDailyCharge}
-                onChange={(e) => setTariffDailyCharge(parseFloat(e.target.value))}
-                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-              />
-              <small style={{ color: "#666", fontSize: "0.85rem" }}>Daily connection charge</small>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: "12px",
-                marginBottom: "12px",
-              }}
-            >
-              <div>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Peak Rate (NZD/kWh)</label>
-                <input
-                  type="number"
-                  step="0.001"
-                  value={tariffPeakRate}
-                  onChange={(e) => setTariffPeakRate(parseFloat(e.target.value))}
-                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                />
-                <small style={{ color: "#666", fontSize: "0.85rem" }}>During peak hours</small>
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-                  Off-Peak Rate (NZD/kWh)
-                </label>
-                <input
-                  type="number"
-                  step="0.001"
-                  value={tariffOffPeakRate}
-                  onChange={(e) => setTariffOffPeakRate(parseFloat(e.target.value))}
-                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                />
-                <small style={{ color: "#666", fontSize: "0.85rem" }}>During off-peak hours</small>
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-                  Daily Fixed Charge (NZD/day)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={tariffDailyCharge}
-                  onChange={(e) => setTariffDailyCharge(parseFloat(e.target.value))}
-                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                />
-                <small style={{ color: "#666", fontSize: "0.85rem" }}>Daily connection charge</small>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "0" }}>
-              <button
-                onClick={() => setTariffShowAdvanced(!tariffShowAdvanced)}
-                style={{
-                  padding: "10px 15px",
-                  marginBottom: "10px",
-                  background: "#e3f2fd",
-                  border: "1px solid #90caf9",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                {tariffShowAdvanced ? "▼" : "▶"} Peak/Off-Peak Schedule
-              </button>
-
-              {tariffShowAdvanced &&
-                renderScheduleEditor(
-                  tariffSchedule,
-                  updateScheduleFn,
-                  addPeriodFn,
-                  removePeriodFn,
-                  updatePeriodFn,
-                  copyToAllFn
-                )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Gas Section - Mode + Pricing */}
-      {hasGas && (
-        <div style={{ marginBottom: "15px", padding: "15px", background: "#fff8f0", borderRadius: "8px" }}>
-          <h5 style={{ margin: "0 0 12px 0", color: "#f57c00", fontSize: "1rem" }}>🔥 Gas</h5>
-
-          {/* Gas Mode Selection */}
-          <div
-            style={{
-              marginBottom: "15px",
-              padding: "12px",
-              background: "white",
-              borderRadius: "6px",
-              border: "1px solid #ffe0b2",
-            }}
-          >
-            <label style={{ display: "flex", alignItems: "center", cursor: "pointer", marginBottom: "8px" }}>
-              <input
-                type="radio"
-                checked={!tariffIsGasFlatRate}
-                onChange={() => setTariffIsGasFlatRate(false)}
-                style={{ marginRight: "8px" }}
-              />
-              <span style={{ fontWeight: 600 }}>Peak/Off-Peak Pricing</span>
-            </label>
-            <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-              <input
-                type="radio"
-                checked={tariffIsGasFlatRate}
-                onChange={() => setTariffIsGasFlatRate(true)}
-                style={{ marginRight: "8px" }}
-              />
-              <span style={{ fontWeight: 600 }}>Flat Rate</span>
-            </label>
-          </div>
-
-          {/* Gas Pricing */}
-          {tariffIsGasFlatRate ? (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: "12px",
-              }}
-            >
-              <div>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Flat Rate (NZD/kWh)</label>
-                <input
-                  type="number"
-                  step="0.001"
-                  value={tariffGasRate}
-                  onChange={(e) => setTariffGasRate(parseFloat(e.target.value))}
-                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                />
-                <small style={{ color: "#666", fontSize: "0.85rem" }}>Same rate for all hours</small>
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-                  Daily Fixed Charge (NZD/day)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={tariffGasDailyCharge}
-                  onChange={(e) => setTariffGasDailyCharge(parseFloat(e.target.value))}
-                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                />
-                <small style={{ color: "#666", fontSize: "0.85rem" }}>Daily connection charge</small>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: "12px",
-                  marginBottom: "12px",
-                }}
-              >
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>Peak Rate (NZD/kWh)</label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={tariffGasPeakRate}
-                    onChange={(e) => setTariffGasPeakRate(parseFloat(e.target.value))}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                  />
-                  <small style={{ color: "#666", fontSize: "0.85rem" }}>During peak hours</small>
-                </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-                    Off-Peak Rate (NZD/kWh)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={tariffGasOffPeakRate}
-                    onChange={(e) => setTariffGasOffPeakRate(parseFloat(e.target.value))}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                  />
-                  <small style={{ color: "#666", fontSize: "0.85rem" }}>During off-peak hours</small>
-                </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: 600 }}>
-                    Daily Fixed Charge (NZD/day)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={tariffGasDailyCharge}
-                    onChange={(e) => setTariffGasDailyCharge(parseFloat(e.target.value))}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "2px solid #ddd" }}
-                  />
-                  <small style={{ color: "#666", fontSize: "0.85rem" }}>Daily connection charge</small>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "0" }}>
-                <button
-                  onClick={() => setTariffShowGasAdvanced(!tariffShowGasAdvanced)}
-                  style={{
-                    padding: "10px 15px",
-                    marginBottom: "10px",
-                    background: "#ffe0b2",
-                    border: "1px solid #ffb74d",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                  }}
-                >
-                  {tariffShowGasAdvanced ? "▼" : "▶"} Peak/Off-Peak Schedule
-                </button>
-
-                {tariffShowGasAdvanced &&
-                  renderScheduleEditor(
-                    tariffGasSchedule,
-                    updateGasScheduleFn,
-                    addGasPeriodFn,
-                    removeGasPeriodFn,
-                    updateGasPeriodFn,
-                    copyGasToAllFn
-                  )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
+  // Using main export default TariffCalculator; duplicate removed
   return (
     <div className="chart-container" style={{ border: "2px dashed #ddd" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
@@ -1158,130 +825,133 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
           {/* Tariff 1 */}
           <div style={{ padding: "15px", background: "#f0f8ff", borderRadius: "8px", border: "2px solid #667eea" }}>
-            {renderTariffSettings(
-              1,
-              isFlatRate,
-              setIsFlatRate,
-              flatRate,
-              setFlatRate,
-              isGasFlatRate,
-              setIsGasFlatRate,
-              gasRate,
-              setGasRate,
-              gasPeakRate,
-              setGasPeakRate,
-              gasOffPeakRate,
-              setGasOffPeakRate,
-              gasDailyCharge,
-              setGasDailyCharge,
-              peakRate,
-              setPeakRate,
-              offPeakRate,
-              setOffPeakRate,
-              dailyCharge,
-              setDailyCharge,
-              showAdvanced,
-              setShowAdvanced,
-              showGasAdvanced,
-              setShowGasAdvanced,
-              schedule,
-              gasSchedule,
-              updateDaySchedule,
-              updateGasDaySchedule,
-              addPeakPeriod,
-              addGasPeakPeriod,
-              removePeakPeriod,
-              removeGasPeakPeriod,
-              updatePeakPeriod,
-              updateGasPeakPeriod,
-              copyScheduleToAll,
-              copyGasScheduleToAll
-            )}
+            <TariffSettings
+              tariffNumber={1}
+              isFlatRate={isFlatRate}
+              setIsFlatRate={setIsFlatRate}
+              flatRate={flatRate}
+              setFlatRate={setFlatRate}
+              isGasFlatRate={isGasFlatRate}
+              setIsGasFlatRate={setIsGasFlatRate}
+              gasRate={gasRate}
+              setGasRate={setGasRate}
+              gasPeakRate={gasPeakRate}
+              setGasPeakRate={setGasPeakRate}
+              gasOffPeakRate={gasOffPeakRate}
+              setGasOffPeakRate={setGasOffPeakRate}
+              gasDailyCharge={gasDailyCharge}
+              setGasDailyCharge={setGasDailyCharge}
+              peakRate={peakRate}
+              setPeakRate={setPeakRate}
+              offPeakRate={offPeakRate}
+              setOffPeakRate={setOffPeakRate}
+              dailyCharge={dailyCharge}
+              setDailyCharge={setDailyCharge}
+              showAdvanced={showAdvanced}
+              setShowAdvanced={setShowAdvanced}
+              showGasAdvanced={showGasAdvanced}
+              setShowGasAdvanced={setShowGasAdvanced}
+              schedule={schedule}
+              gasSchedule={gasSchedule}
+              updateDaySchedule={updateDaySchedule}
+              updateGasDaySchedule={updateGasDaySchedule}
+              addPeakPeriod={addPeakPeriod}
+              addGasPeakPeriod={addGasPeakPeriod}
+              removePeakPeriod={removePeakPeriod}
+              removeGasPeakPeriod={removeGasPeakPeriod}
+              updatePeakPeriod={updatePeakPeriod}
+              updateGasPeakPeriod={updateGasPeakPeriod}
+              copyScheduleToAll={copyScheduleToAll}
+              copyGasScheduleToAll={copyGasScheduleToAll}
+              renderScheduleEditor={renderScheduleEditor}
+            />
           </div>
 
           {/* Tariff 2 */}
           <div style={{ padding: "15px", background: "#fff8f0", borderRadius: "8px", border: "2px solid #ff9800" }}>
-            {renderTariffSettings(
-              2,
-              isFlatRate2,
-              setIsFlatRate2,
-              flatRate2,
-              setFlatRate2,
-              isGasFlatRate2,
-              setIsGasFlatRate2,
-              gasRate2,
-              setGasRate2,
-              gasPeakRate2,
-              setGasPeakRate2,
-              gasOffPeakRate2,
-              setGasOffPeakRate2,
-              gasDailyCharge2,
-              setGasDailyCharge2,
-              peakRate2,
-              setPeakRate2,
-              offPeakRate2,
-              setOffPeakRate2,
-              dailyCharge2,
-              setDailyCharge2,
-              showAdvanced2,
-              setShowAdvanced2,
-              showGasAdvanced2,
-              setShowGasAdvanced2,
-              schedule2,
-              gasSchedule2,
-              updateDaySchedule2,
-              updateGasDaySchedule2,
-              addPeakPeriod2,
-              addGasPeakPeriod2,
-              removePeakPeriod2,
-              removeGasPeakPeriod2,
-              updatePeakPeriod2,
-              updateGasPeakPeriod2,
-              copyScheduleToAll2,
-              copyGasScheduleToAll2
-            )}
+            <TariffSettings
+              tariffNumber={2}
+              isFlatRate={isFlatRate2}
+              setIsFlatRate={setIsFlatRate2}
+              flatRate={flatRate2}
+              setFlatRate={setFlatRate2}
+              isGasFlatRate={isGasFlatRate2}
+              setIsGasFlatRate={setIsGasFlatRate2}
+              gasRate={gasRate2}
+              setGasRate={setGasRate2}
+              gasPeakRate={gasPeakRate2}
+              setGasPeakRate={setGasPeakRate2}
+              gasOffPeakRate={gasOffPeakRate2}
+              setGasOffPeakRate={setGasOffPeakRate2}
+              gasDailyCharge={gasDailyCharge2}
+              setGasDailyCharge={setGasDailyCharge2}
+              peakRate={peakRate2}
+              setPeakRate={setPeakRate2}
+              offPeakRate={offPeakRate2}
+              setOffPeakRate={setOffPeakRate2}
+              dailyCharge={dailyCharge2}
+              setDailyCharge={setDailyCharge2}
+              showAdvanced={showAdvanced2}
+              setShowAdvanced={setShowAdvanced2}
+              showGasAdvanced={showGasAdvanced2}
+              setShowGasAdvanced={setShowGasAdvanced2}
+              schedule={schedule2}
+              gasSchedule={gasSchedule2}
+              updateDaySchedule={updateDaySchedule2}
+              updateGasDaySchedule={updateGasDaySchedule2}
+              addPeakPeriod={addPeakPeriod2}
+              addGasPeakPeriod={addGasPeakPeriod2}
+              removePeakPeriod={removePeakPeriod2}
+              removeGasPeakPeriod={removeGasPeakPeriod2}
+              updatePeakPeriod={updatePeakPeriod2}
+              updateGasPeakPeriod={updateGasPeakPeriod2}
+              copyScheduleToAll={copyScheduleToAll2}
+              copyGasScheduleToAll={copyGasScheduleToAll2}
+              renderScheduleEditor={renderScheduleEditor}
+            />
           </div>
         </div>
       ) : (
-        renderTariffSettings(
-          1,
-          isFlatRate,
-          setIsFlatRate,
-          flatRate,
-          setFlatRate,
-          isGasFlatRate,
-          setIsGasFlatRate,
-          gasRate,
-          setGasRate,
-          gasPeakRate,
-          setGasPeakRate,
-          gasOffPeakRate,
-          setGasOffPeakRate,
-          gasDailyCharge,
-          setGasDailyCharge,
-          peakRate,
-          setPeakRate,
-          offPeakRate,
-          setOffPeakRate,
-          dailyCharge,
-          setDailyCharge,
-          showAdvanced,
-          setShowAdvanced,
-          showGasAdvanced,
-          setShowGasAdvanced,
-          schedule,
-          gasSchedule,
-          updateDaySchedule,
-          updateGasDaySchedule,
-          addPeakPeriod,
-          addGasPeakPeriod,
-          removePeakPeriod,
-          removeGasPeakPeriod,
-          updatePeakPeriod,
-          updateGasPeakPeriod,
-          copyScheduleToAll,
-          copyGasScheduleToAll
-        )
+        <TariffSettings
+          tariffNumber={1}
+          isFlatRate={isFlatRate}
+          setIsFlatRate={setIsFlatRate}
+          flatRate={flatRate}
+          setFlatRate={setFlatRate}
+          isGasFlatRate={isGasFlatRate}
+          setIsGasFlatRate={setIsGasFlatRate}
+          gasRate={gasRate}
+          setGasRate={setGasRate}
+          gasPeakRate={gasPeakRate}
+          setGasPeakRate={setGasPeakRate}
+          gasOffPeakRate={gasOffPeakRate}
+          setGasOffPeakRate={setGasOffPeakRate}
+          gasDailyCharge={gasDailyCharge}
+          setGasDailyCharge={setGasDailyCharge}
+          peakRate={peakRate}
+          setPeakRate={setPeakRate}
+          offPeakRate={offPeakRate}
+          setOffPeakRate={setOffPeakRate}
+          dailyCharge={dailyCharge}
+          setDailyCharge={setDailyCharge}
+          showAdvanced={showAdvanced}
+          setShowAdvanced={setShowAdvanced}
+          showGasAdvanced={showGasAdvanced}
+          setShowGasAdvanced={setShowGasAdvanced}
+          schedule={schedule}
+          gasSchedule={gasSchedule}
+          updateDaySchedule={updateDaySchedule}
+          updateGasDaySchedule={updateGasDaySchedule}
+          addPeakPeriod={addPeakPeriod}
+          addGasPeakPeriod={addGasPeakPeriod}
+          removePeakPeriod={removePeakPeriod}
+          removeGasPeakPeriod={removeGasPeakPeriod}
+          updatePeakPeriod={updatePeakPeriod}
+          updateGasPeakPeriod={updateGasPeakPeriod}
+          copyScheduleToAll={copyScheduleToAll}
+          copyGasScheduleToAll={copyGasScheduleToAll}
+          renderScheduleEditor={renderScheduleEditor}
+        />
       )}
 
       <div style={{ display: "flex", gap: "8px", marginTop: "15px", marginBottom: "15px" }}>

@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
         username: user.username,
         email: user.email,
         isGuest: user.is_guest === 1,
+        isAdmin: user.is_admin === 1,
       },
     });
   } catch (error) {

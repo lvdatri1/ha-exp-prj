@@ -23,6 +23,7 @@ function initializeSchema() {
       email TEXT UNIQUE,
       password_hash TEXT,
       is_guest INTEGER DEFAULT 0,
+      is_admin INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       last_login TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -69,6 +70,43 @@ function initializeSchema() {
     CREATE INDEX IF NOT EXISTS idx_gas_daily_total ON gas_data(is_daily_total, date);
     CREATE INDEX IF NOT EXISTS idx_gas_user_date ON gas_data(user_id, date);
   `);
+
+  // Ensure is_admin column exists for users in case of legacy DB
+  try {
+    const columns = db.prepare(`PRAGMA table_info(users)`).all() as Array<{ name: string }>;
+    const hasAdmin = columns.some((c) => c.name === "is_admin");
+    if (!hasAdmin) {
+      db.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`);
+    }
+  } catch (err) {
+    console.warn("Could not ensure is_admin column:", err);
+  }
+
+  // Power plans table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS power_plans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      retailer TEXT NOT NULL,
+      name TEXT NOT NULL,
+      active INTEGER DEFAULT 1,
+      is_flat_rate INTEGER DEFAULT 1,
+      flat_rate REAL,
+      peak_rate REAL,
+      off_peak_rate REAL,
+      daily_charge REAL,
+      has_gas INTEGER DEFAULT 0,
+      gas_is_flat_rate INTEGER DEFAULT 1,
+      gas_flat_rate REAL,
+      gas_peak_rate REAL,
+      gas_off_peak_rate REAL,
+      gas_daily_charge REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_power_plans_active ON power_plans(active);
+    CREATE INDEX IF NOT EXISTS idx_power_plans_retailer ON power_plans(retailer);
+  `);
 }
 
 export interface EnergyRecord {
@@ -101,8 +139,29 @@ export interface User {
   email?: string;
   password_hash?: string;
   is_guest: number;
+  is_admin: number;
   created_at: string;
   last_login: string;
+}
+
+export interface PowerPlan {
+  id?: number;
+  retailer: string;
+  name: string;
+  active: number; // 1 or 0
+  is_flat_rate: number; // 1 or 0
+  flat_rate?: number | null;
+  peak_rate?: number | null;
+  off_peak_rate?: number | null;
+  daily_charge?: number | null;
+  has_gas: number; // 1 or 0
+  gas_is_flat_rate: number; // 1 or 0
+  gas_flat_rate?: number | null;
+  gas_peak_rate?: number | null;
+  gas_off_peak_rate?: number | null;
+  gas_daily_charge?: number | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // User management functions
@@ -140,6 +199,20 @@ export function getUserByEmail(email: string): User | null {
 export function updateLastLogin(userId: number) {
   const db = getDb();
   db.prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?").run(userId);
+}
+
+export function listUsers(): User[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT id, username, email, is_guest, is_admin, created_at, last_login FROM users ORDER BY created_at DESC`
+    )
+    .all() as User[];
+}
+
+export function updateUserAdmin(userId: number, isAdmin: boolean) {
+  const db = getDb();
+  db.prepare("UPDATE users SET is_admin = ? WHERE id = ?").run(isAdmin ? 1 : 0, userId);
 }
 
 export function insertEnergyData(records: Omit<EnergyRecord, "id">[], userId: number) {
@@ -327,3 +400,122 @@ export function clearGasData(userId: number) {
   db.prepare("DELETE FROM gas_data WHERE user_id = ?").run(userId);
 }
 
+// Power plans operations
+export function listPowerPlans(activeOnly: boolean = false): PowerPlan[] {
+  const db = getDb();
+  if (activeOnly) {
+    return db.prepare(`SELECT * FROM power_plans WHERE active = 1 ORDER BY retailer, name`).all() as PowerPlan[];
+  }
+  return db.prepare(`SELECT * FROM power_plans ORDER BY active DESC, retailer, name`).all() as PowerPlan[];
+}
+
+export function getPowerPlanById(id: number): PowerPlan | null {
+  const db = getDb();
+  return db.prepare(`SELECT * FROM power_plans WHERE id = ?`).get(id) as PowerPlan | null;
+}
+
+export function createPowerPlan(plan: Omit<PowerPlan, "id" | "created_at" | "updated_at">): PowerPlan {
+  const db = getDb();
+  const insert = db.prepare(`
+    INSERT INTO power_plans (
+      retailer, name, active, is_flat_rate, flat_rate, peak_rate, off_peak_rate, daily_charge,
+      has_gas, gas_is_flat_rate, gas_flat_rate, gas_peak_rate, gas_off_peak_rate, gas_daily_charge,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  `);
+
+  const result = insert.run(
+    plan.retailer,
+    plan.name,
+    plan.active ?? 1,
+    plan.is_flat_rate ?? 1,
+    plan.flat_rate ?? null,
+    plan.peak_rate ?? null,
+    plan.off_peak_rate ?? null,
+    plan.daily_charge ?? null,
+    plan.has_gas ?? 0,
+    plan.gas_is_flat_rate ?? 1,
+    plan.gas_flat_rate ?? null,
+    plan.gas_peak_rate ?? null,
+    plan.gas_off_peak_rate ?? null,
+    plan.gas_daily_charge ?? null
+  );
+
+  return getPowerPlanById(Number(result.lastInsertRowid))!;
+}
+
+export function updatePowerPlan(
+  id: number,
+  fields: Partial<Omit<PowerPlan, "id" | "created_at" | "updated_at">>
+): PowerPlan | null {
+  const db = getDb();
+
+  // Build dynamic update
+  const allowed = [
+    "retailer",
+    "name",
+    "active",
+    "is_flat_rate",
+    "flat_rate",
+    "peak_rate",
+    "off_peak_rate",
+    "daily_charge",
+    "has_gas",
+    "gas_is_flat_rate",
+    "gas_flat_rate",
+    "gas_peak_rate",
+    "gas_off_peak_rate",
+    "gas_daily_charge",
+  ];
+  const updates: string[] = [];
+  const values: any[] = [];
+  for (const key of allowed) {
+    if (key in fields) {
+      updates.push(`${key} = ?`);
+      // @ts-ignore
+      values.push(fields[key]);
+    }
+  }
+  if (updates.length === 0) return getPowerPlanById(id);
+
+  const sql = `UPDATE power_plans SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+  values.push(id);
+  db.prepare(sql).run(...values);
+  return getPowerPlanById(id);
+}
+
+export function deletePowerPlan(id: number) {
+  const db = getDb();
+  db.prepare(`DELETE FROM power_plans WHERE id = ?`).run(id);
+}
+
+// Admin metrics
+export function getAdminMetrics() {
+  const db = getDb();
+  const users = db.prepare(`SELECT COUNT(*) as c FROM users`).get() as { c: number };
+  const guestUsers = db.prepare(`SELECT COUNT(*) as c FROM users WHERE is_guest = 1`).get() as { c: number };
+  const adminUsers = db.prepare(`SELECT COUNT(*) as c FROM users WHERE is_admin = 1`).get() as { c: number };
+  const energy = db.prepare(`SELECT COUNT(*) as c FROM energy_data`).get() as { c: number };
+  const gas = db.prepare(`SELECT COUNT(*) as c FROM gas_data`).get() as { c: number };
+  const plansActive = db.prepare(`SELECT COUNT(*) as c FROM power_plans WHERE active = 1`).get() as { c: number };
+  const plansTotal = db.prepare(`SELECT COUNT(*) as c FROM power_plans`).get() as { c: number };
+
+  const recentUsers = db
+    .prepare(`SELECT id, username, created_at FROM users ORDER BY created_at DESC LIMIT 5`)
+    .all() as Array<{ id: number; username: string; created_at: string }>;
+  const recentPlans = db
+    .prepare(`SELECT id, retailer, name, updated_at FROM power_plans ORDER BY updated_at DESC LIMIT 5`)
+    .all() as Array<{ id: number; retailer: string; name: string; updated_at: string }>;
+
+  return {
+    users: users.c,
+    guestUsers: guestUsers.c,
+    adminUsers: adminUsers.c,
+    energyRecords: energy.c,
+    gasRecords: gas.c,
+    activePlans: plansActive.c,
+    totalPlans: plansTotal.c,
+    recentUsers,
+    recentPlans,
+  };
+}
