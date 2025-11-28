@@ -43,44 +43,10 @@ interface TariffSettingsProps {
 }
 
 const TariffSettings: React.FC<TariffSettingsProps> = (props) => {
-  const [selectedPlan, setSelectedPlan] = React.useState<string>("");
-
-  React.useEffect(() => {
-    if (!selectedPlan) return;
-    const plan = (window as any).NZ_POWER_PLANS?.find((p: any) => p.name === selectedPlan);
-    if (!plan) return;
-    props.setIsFlatRate(!!plan.isFlatRate);
-    if (plan.isFlatRate && plan.flatRate !== undefined) props.setFlatRate(plan.flatRate);
-    if (!plan.isFlatRate && plan.peakRate !== undefined) props.setPeakRate(plan.peakRate);
-    if (!plan.isFlatRate && plan.offPeakRate !== undefined) props.setOffPeakRate(plan.offPeakRate);
-    if (plan.dailyCharge !== undefined) props.setDailyCharge(plan.dailyCharge);
-    if (plan.hasGas) {
-      props.setIsGasFlatRate(true);
-      if (plan.gasFlatRate !== undefined) props.setGasRate(plan.gasFlatRate);
-      if (plan.gasDailyCharge !== undefined) props.setGasDailyCharge(plan.gasDailyCharge);
-    }
-  }, [selectedPlan]);
-
-  // PlanSelector can be used here if desired
+  // Plan selection is now handled by parent component (TariffCalculator) via PlanSelector
   return (
     <div>
       <h4 style={{ marginBottom: "12px", color: "#333" }}>Tariff {props.tariffNumber}</h4>
-      {/* Plan Selector for this tariff */}
-      <div style={{ margin: "0 0 15px 0" }}>
-        <label style={{ fontWeight: 600, marginRight: 8 }}>Select NZ Power Plan:</label>
-        <select
-          value={selectedPlan}
-          onChange={(e) => setSelectedPlan(e.target.value)}
-          style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #bbb", minWidth: 200 }}
-        >
-          <option value="">-- Choose a plan --</option>
-          {(window as any).NZ_POWER_PLANS?.map((plan: any) => (
-            <option key={plan.name} value={plan.name}>
-              {plan.retailer} - {plan.name}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {/* Electricity Section - Mode + Pricing */}
       <div style={{ marginBottom: "20px", padding: "15px", background: "#f0f8ff", borderRadius: "8px" }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import TariffSettings from "./TariffSettings";
+import PlanSelector from "./PlanSelector";
 // Static NZ_POWER_PLANS removed; plans now provided via PlanSelector + DB.
 
 import { useState, useEffect, useMemo } from "react";
@@ -26,7 +27,6 @@ interface ExternalPowerPlan {
 interface TariffCalculatorProps {
   allData: any[];
   gasData?: any[];
-  selectedPlan?: ExternalPowerPlan | null;
 }
 
 interface PeakPeriod {
@@ -100,7 +100,11 @@ const DEFAULT_SCHEDULE: WeekSchedule = {
   sunday: { enabled: true, allOffPeak: true, peakPeriods: [] },
 };
 
-export default function TariffCalculator({ allData, gasData = [], selectedPlan = null }: TariffCalculatorProps) {
+export default function TariffCalculator({ allData, gasData = [] }: TariffCalculatorProps) {
+  // Internal state for selected plans
+  const [selectedPlan, setSelectedPlan] = useState<ExternalPowerPlan | null>(null);
+  const [selectedPlan2, setSelectedPlan2] = useState<ExternalPowerPlan | null>(null);
+
   // When an external plan is provided, auto-fill tariff settings from DB-backed plan.
   useEffect(() => {
     if (!selectedPlan) return;
@@ -123,6 +127,29 @@ export default function TariffCalculator({ allData, gasData = [], selectedPlan =
       if (selectedPlan.gas_daily_charge != null) setGasDailyCharge(selectedPlan.gas_daily_charge);
     }
   }, [selectedPlan]);
+
+  // When plan 2 is selected, auto-fill tariff 2 settings
+  useEffect(() => {
+    if (!selectedPlan2) return;
+    setIsFlatRate2(selectedPlan2.is_flat_rate === 1);
+    if (selectedPlan2.is_flat_rate === 1) {
+      if (selectedPlan2.flat_rate != null) setFlatRate2(selectedPlan2.flat_rate);
+    } else {
+      if (selectedPlan2.peak_rate != null) setPeakRate2(selectedPlan2.peak_rate);
+      if (selectedPlan2.off_peak_rate != null) setOffPeakRate2(selectedPlan2.off_peak_rate);
+    }
+    if (selectedPlan2.daily_charge != null) setDailyCharge2(selectedPlan2.daily_charge);
+    if (selectedPlan2.has_gas === 1) {
+      setIsGasFlatRate2(selectedPlan2.gas_is_flat_rate === 1);
+      if (selectedPlan2.gas_is_flat_rate === 1) {
+        if (selectedPlan2.gas_flat_rate != null) setGasRate2(selectedPlan2.gas_flat_rate);
+      } else {
+        if (selectedPlan2.gas_peak_rate != null) setGasPeakRate2(selectedPlan2.gas_peak_rate);
+        if (selectedPlan2.gas_off_peak_rate != null) setGasOffPeakRate2(selectedPlan2.gas_off_peak_rate);
+      }
+      if (selectedPlan2.gas_daily_charge != null) setGasDailyCharge2(selectedPlan2.gas_daily_charge);
+    }
+  }, [selectedPlan2]);
   // Comparison filter: 'both', 'electric', 'gas'
   const [compareType, setCompareType] = useState<"both" | "electric" | "gas">("both");
   const [compareMode, setCompareMode] = useState(false);
@@ -803,6 +830,7 @@ export default function TariffCalculator({ allData, gasData = [], selectedPlan =
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
           {/* Tariff 1 */}
           <div style={{ padding: "15px", background: "#f0f8ff", borderRadius: "8px", border: "2px solid #667eea" }}>
+            <PlanSelector selectedPlan={selectedPlan} onSelect={setSelectedPlan} />
             <TariffSettings
               tariffNumber={1}
               isFlatRate={isFlatRate}
@@ -847,6 +875,7 @@ export default function TariffCalculator({ allData, gasData = [], selectedPlan =
 
           {/* Tariff 2 */}
           <div style={{ padding: "15px", background: "#fff8f0", borderRadius: "8px", border: "2px solid #ff9800" }}>
+            <PlanSelector selectedPlan={selectedPlan2} onSelect={setSelectedPlan2} />
             <TariffSettings
               tariffNumber={2}
               isFlatRate={isFlatRate2}
@@ -890,46 +919,49 @@ export default function TariffCalculator({ allData, gasData = [], selectedPlan =
           </div>
         </div>
       ) : (
-        <TariffSettings
-          tariffNumber={1}
-          isFlatRate={isFlatRate}
-          setIsFlatRate={setIsFlatRate}
-          flatRate={flatRate}
-          setFlatRate={setFlatRate}
-          isGasFlatRate={isGasFlatRate}
-          setIsGasFlatRate={setIsGasFlatRate}
-          gasRate={gasRate}
-          setGasRate={setGasRate}
-          gasPeakRate={gasPeakRate}
-          setGasPeakRate={setGasPeakRate}
-          gasOffPeakRate={gasOffPeakRate}
-          setGasOffPeakRate={setGasOffPeakRate}
-          gasDailyCharge={gasDailyCharge}
-          setGasDailyCharge={setGasDailyCharge}
-          peakRate={peakRate}
-          setPeakRate={setPeakRate}
-          offPeakRate={offPeakRate}
-          setOffPeakRate={setOffPeakRate}
-          dailyCharge={dailyCharge}
-          setDailyCharge={setDailyCharge}
-          showAdvanced={showAdvanced}
-          setShowAdvanced={setShowAdvanced}
-          showGasAdvanced={showGasAdvanced}
-          setShowGasAdvanced={setShowGasAdvanced}
-          schedule={schedule}
-          gasSchedule={gasSchedule}
-          updateDaySchedule={updateDaySchedule}
-          updateGasDaySchedule={updateGasDaySchedule}
-          addPeakPeriod={addPeakPeriod}
-          addGasPeakPeriod={addGasPeakPeriod}
-          removePeakPeriod={removePeakPeriod}
-          removeGasPeakPeriod={removeGasPeakPeriod}
-          updatePeakPeriod={updatePeakPeriod}
-          updateGasPeakPeriod={updateGasPeakPeriod}
-          copyScheduleToAll={copyScheduleToAll}
-          copyGasScheduleToAll={copyGasScheduleToAll}
-          renderScheduleEditor={renderScheduleEditor}
-        />
+        <div>
+          <PlanSelector selectedPlan={selectedPlan} onSelect={setSelectedPlan} />
+          <TariffSettings
+            tariffNumber={1}
+            isFlatRate={isFlatRate}
+            setIsFlatRate={setIsFlatRate}
+            flatRate={flatRate}
+            setFlatRate={setFlatRate}
+            isGasFlatRate={isGasFlatRate}
+            setIsGasFlatRate={setIsGasFlatRate}
+            gasRate={gasRate}
+            setGasRate={setGasRate}
+            gasPeakRate={gasPeakRate}
+            setGasPeakRate={setGasPeakRate}
+            gasOffPeakRate={gasOffPeakRate}
+            setGasOffPeakRate={setGasOffPeakRate}
+            gasDailyCharge={gasDailyCharge}
+            setGasDailyCharge={setGasDailyCharge}
+            peakRate={peakRate}
+            setPeakRate={setPeakRate}
+            offPeakRate={offPeakRate}
+            setOffPeakRate={setOffPeakRate}
+            dailyCharge={dailyCharge}
+            setDailyCharge={setDailyCharge}
+            showAdvanced={showAdvanced}
+            setShowAdvanced={setShowAdvanced}
+            showGasAdvanced={showGasAdvanced}
+            setShowGasAdvanced={setShowGasAdvanced}
+            schedule={schedule}
+            gasSchedule={gasSchedule}
+            updateDaySchedule={updateDaySchedule}
+            updateGasDaySchedule={updateGasDaySchedule}
+            addPeakPeriod={addPeakPeriod}
+            addGasPeakPeriod={addGasPeakPeriod}
+            removePeakPeriod={removePeakPeriod}
+            removeGasPeakPeriod={removeGasPeakPeriod}
+            updatePeakPeriod={updatePeakPeriod}
+            updateGasPeakPeriod={updateGasPeakPeriod}
+            copyScheduleToAll={copyScheduleToAll}
+            copyGasScheduleToAll={copyGasScheduleToAll}
+            renderScheduleEditor={renderScheduleEditor}
+          />
+        </div>
       )}
 
       <div style={{ display: "flex", gap: "8px", marginTop: "15px", marginBottom: "15px" }}>
