@@ -1,0 +1,139 @@
+name: Automated Testing
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  unit-tests:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: nextjs-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./nextjs-app
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: ./nextjs-app
+        run: npm test -- --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./nextjs-app/coverage
+          flags: unittests
+          name: codecov-umbrella
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: nextjs-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./nextjs-app
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: ./nextjs-app
+        run: npx playwright install --with-deps
+
+      - name: Seed test database
+        working-directory: ./nextjs-app
+        run: npm run seed:plans
+
+      - name: Run Playwright tests
+        working-directory: ./nextjs-app
+        run: npm run test:e2e
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: nextjs-app/playwright-report/
+          retention-days: 30
+
+      - name: Upload test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: nextjs-app/test-results/
+          retention-days: 7
+
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: nextjs-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./nextjs-app
+        run: npm ci
+
+      - name: Run linter
+        working-directory: ./nextjs-app
+        run: npm run lint
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: nextjs-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./nextjs-app
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./nextjs-app
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: nextjs-app/.next/
+          retention-days: 7

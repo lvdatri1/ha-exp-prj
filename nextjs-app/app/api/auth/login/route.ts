@@ -4,7 +4,19 @@ import { verifyPassword } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const contentType = request.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return NextResponse.json({ error: "Content-Type must be application/json" }, { status: 400 });
+    }
+
+    let parsed: any = null;
+    try {
+      parsed = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid or empty JSON body" }, { status: 400 });
+    }
+
+    const { username, password } = parsed || {};
 
     if (!username || !password) {
       return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
@@ -45,7 +57,10 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Login error:", error);
+    // Avoid noisy logs for JSON parse; other errors still logged
+    if (!(error instanceof SyntaxError)) {
+      console.error("Login error:", error);
+    }
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 }

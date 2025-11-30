@@ -5,3 +5,5 @@ out/
 *.db-shm
 *.db-wal
 .env*.local
+
+/lib/generated/prisma

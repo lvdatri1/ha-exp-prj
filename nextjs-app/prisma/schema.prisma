@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  username     String       @unique(map: "sqlite_autoindex_users_1")
+  email        String?      @unique(map: "sqlite_autoindex_users_2")
+  passwordHash String?      @map("password_hash")
+  isGuest      Boolean      @default(false) @map("is_guest")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  lastLogin    DateTime?    @map("last_login")
+  isAdmin      Boolean      @default(false) @map("is_admin")
+  energyData   EnergyData[]
+  gasData      GasData[]
+
+  @@map("users")
+}
+
+model EnergyData {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  startTime    String   @map("start_time")
+  endTime      String   @map("end_time")
+  kwh          Float
+  date         String
+  hour         Int
+  minute       Int
+  isDailyTotal Boolean  @default(false) @map("is_daily_total")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, date], map: "idx_user_date")
+  @@index([isDailyTotal, date], map: "idx_daily_total")
+  @@index([hour, minute], map: "idx_hour_minute")
+  @@index([startTime], map: "idx_start_time")
+  @@index([date], map: "idx_date")
+  @@index([userId], map: "idx_user_id")
+  @@map("energy_data")
+}
+
+model GasData {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  startTime    String   @map("start_time")
+  endTime      String   @map("end_time")
+  kwh          Float
+  date         String
+  hour         Int
+  minute       Int
+  isDailyTotal Boolean  @default(false) @map("is_daily_total")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, date], map: "idx_gas_user_date")
+  @@index([isDailyTotal, date], map: "idx_gas_daily_total")
+  @@index([hour, minute], map: "idx_gas_hour_minute")
+  @@index([startTime], map: "idx_gas_start_time")
+  @@index([date], map: "idx_gas_date")
+  @@index([userId], map: "idx_gas_user_id")
+  @@map("gas_data")
+}
+
+model PowerPlan {
+  id             Int      @id @default(autoincrement())
+  retailer       String
+  name           String
+  active         Boolean  @default(true)
+  isFlatRate     Boolean  @default(true) @map("is_flat_rate")
+  flatRate       Float?   @map("flat_rate")
+  peakRate       Float?   @map("peak_rate")
+  offPeakRate    Float?   @map("off_peak_rate")
+  dailyCharge    Float?   @map("daily_charge")
+  hasGas         Boolean  @default(false) @map("has_gas")
+  gasIsFlatRate  Boolean  @default(true) @map("gas_is_flat_rate")
+  gasFlatRate    Float?   @map("gas_flat_rate")
+  gasPeakRate    Float?   @map("gas_peak_rate")
+  gasOffPeakRate Float?   @map("gas_off_peak_rate")
+  gasDailyCharge Float?   @map("gas_daily_charge")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([retailer], map: "idx_power_plans_retailer")
+  @@index([active], map: "idx_power_plans_active")
+  @@map("power_plans")
+}
