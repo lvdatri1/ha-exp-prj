@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 });
     }
 
-    const dailyTotals = getDailyTotals(parseInt(userId));
+    const dailyTotals = await getDailyTotals(parseInt(userId));
 
     return NextResponse.json({
       success: true,

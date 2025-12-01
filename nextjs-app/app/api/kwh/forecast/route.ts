@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const roundedTime = roundUpTo30Minutes(requestedTime);
 
     // Get all data for forecast calculation
-    const allData = getAllEnergyData(parseInt(userId));
+    const allData = await getAllEnergyData(parseInt(userId));
 
     // Group by day of week and time slot
     const dayOfWeek = roundedTime.getDay();

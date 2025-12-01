@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: { date: st
     const dayOfWeek = targetDate.getDay();
 
     // Get all data
-    const allData = getAllEnergyData(parseInt(userId));
+    const allData = await getAllEnergyData(parseInt(userId));
 
     // Generate 48 time slots for the day
     const forecasts = [];

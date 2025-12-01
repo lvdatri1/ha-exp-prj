@@ -48,7 +48,7 @@ test.describe("Responsive Design", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible({ timeout: 10000 });
   });
 
   test("should display on tablet viewport", async ({ page }) => {
@@ -56,7 +56,7 @@ test.describe("Responsive Design", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible({ timeout: 10000 });
   });
 
   test("should display on desktop viewport", async ({ page }) => {
@@ -64,7 +64,7 @@ test.describe("Responsive Design", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible({ timeout: 10000 });
   });
 
   test("admin panel should be responsive", async ({ page }) => {

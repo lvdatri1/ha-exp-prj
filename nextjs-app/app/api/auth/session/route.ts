@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null });
     }
 
-    const user = getUserById(parseInt(userId));
+    const user = await getUserById(parseInt(userId));
 
     if (!user) {
       return NextResponse.json({ user: null });

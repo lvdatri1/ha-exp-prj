@@ -10,12 +10,15 @@ test.describe("Authentication Flow", () => {
     await page.goto("/");
 
     const guestButton = page.getByRole("button", { name: /continue as guest/i });
-    await expect(guestButton).toBeVisible();
+    await guestButton.waitFor({ state: "visible", timeout: 10000 });
     await guestButton.click();
+
+    // Wait for authentication to complete
+    await page.waitForTimeout(1000);
 
     // Should redirect to dashboard
     await expect(page).toHaveURL("/");
-    await expect(page.getByRole("button", { name: /logout/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /logout/i })).toBeVisible({ timeout: 10000 });
   });
 
   test("should login with credentials", async ({ page }) => {

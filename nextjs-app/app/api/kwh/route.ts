@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const startRange = new Date(targetTime.getTime() - 60000);
     const endRange = new Date(targetTime.getTime() + 60000);
 
-    const records = getEnergyByTimeRange(startRange.toISOString(), endRange.toISOString(), parseInt(userId));
+    const records = await getEnergyByTimeRange(startRange.toISOString(), endRange.toISOString(), parseInt(userId));
 
     if (records.length === 0) {
       return NextResponse.json({

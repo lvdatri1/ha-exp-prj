@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 });
     }
 
-    const data = getAllEnergyData(parseInt(userId));
+    const data = await getAllEnergyData(parseInt(userId));
 
     const formatted = data.map((record) => ({
       startTime: record.start_time,

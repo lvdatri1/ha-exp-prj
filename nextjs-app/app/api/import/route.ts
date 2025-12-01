@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parse } from "csv-parse";
-import { getDb } from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 interface CSVRow {
   [key: string]: string;
@@ -58,11 +58,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "CSV file is empty or invalid" }, { status: 400 });
     }
 
-    const db = getDb();
+    const userIdNum = parseInt(userId);
 
     // Clear existing data for this user if override is true
     if (override) {
-      db.prepare("DELETE FROM energy_data WHERE user_id = ?").run(parseInt(userId));
+      await prisma.energyData.deleteMany({
+        where: { userId: userIdNum },
+      });
     }
 
     // Sort by start time
@@ -78,82 +80,79 @@ export async function POST(request: NextRequest) {
       dateGroups[dateKey].push(item);
     });
 
-    const insertStmt = db.prepare(`
-      INSERT INTO energy_data (user_id, start_time, end_time, kwh, date, hour, minute, is_daily_total)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
     let periodRecords = 0;
     let dailyTotals = 0;
     let skipped = 0;
 
-    const insertMany = db.transaction(() => {
-      Object.keys(dateGroups)
-        .sort()
-        .forEach((dateKey) => {
-          const dayData = dateGroups[dateKey];
+    // Process all date groups
+    for (const dateKey of Object.keys(dateGroups).sort()) {
+      const dayData = dateGroups[dateKey];
 
-          for (let i = 0; i < dayData.length; i++) {
-            const current = dayData[i];
-            const hour = current.startTime.getHours();
-            const minute = current.startTime.getMinutes();
+      for (let i = 0; i < dayData.length; i++) {
+        const current = dayData[i];
+        const hour = current.startTime.getHours();
+        const minute = current.startTime.getMinutes();
 
-            // Check if already exists (if not overriding)
-            if (!override) {
-              const existing = db
-                .prepare("SELECT 1 FROM energy_data WHERE user_id = ? AND start_time = ?")
-                .get(parseInt(userId), current.startTime.toISOString());
+        // Check if already exists (if not overriding)
+        if (!override) {
+          const existing = await prisma.energyData.findFirst({
+            where: {
+              userId: userIdNum,
+              startTime: current.startTime.toISOString(),
+            },
+          });
 
-              if (existing) {
-                skipped++;
-                continue;
-              }
-            }
+          if (existing) {
+            skipped++;
+            continue;
+          }
+        }
 
-            // Check if this is the 23:30 reading (last period with daily total)
-            if (hour === 23 && minute === 30) {
-              insertStmt.run(
-                parseInt(userId),
-                current.startTime.toISOString(),
-                current.endTime.toISOString(),
-                current.cumulativeKwh,
-                dateKey,
-                hour,
-                minute,
-                1
-              );
-              dailyTotals++;
-              continue;
-            }
-
-            // For other periods, calculate the difference
-            let periodKwh;
-            if (i === 0) {
-              periodKwh = current.cumulativeKwh;
-            } else {
-              const previous = dayData[i - 1];
-              periodKwh = current.cumulativeKwh - previous.cumulativeKwh;
-              if (periodKwh < 0) {
-                periodKwh = current.cumulativeKwh;
-              }
-            }
-
-            insertStmt.run(
-              parseInt(userId),
-              current.startTime.toISOString(),
-              current.endTime.toISOString(),
-              periodKwh,
-              dateKey,
+        // Check if this is the 23:30 reading (last period with daily total)
+        if (hour === 23 && minute === 30) {
+          await prisma.energyData.create({
+            data: {
+              userId: userIdNum,
+              startTime: current.startTime.toISOString(),
+              endTime: current.endTime.toISOString(),
+              kwh: current.cumulativeKwh,
+              date: dateKey,
               hour,
               minute,
-              0
-            );
-            periodRecords++;
-          }
-        });
-    });
+              isDailyTotal: true,
+            },
+          });
+          dailyTotals++;
+          continue;
+        }
 
-    insertMany();
+        // For other periods, calculate the difference
+        let periodKwh;
+        if (i === 0) {
+          periodKwh = current.cumulativeKwh;
+        } else {
+          const previous = dayData[i - 1];
+          periodKwh = current.cumulativeKwh - previous.cumulativeKwh;
+          if (periodKwh < 0) {
+            periodKwh = current.cumulativeKwh;
+          }
+        }
+
+        await prisma.energyData.create({
+          data: {
+            userId: userIdNum,
+            startTime: current.startTime.toISOString(),
+            endTime: current.endTime.toISOString(),
+            kwh: periodKwh,
+            date: dateKey,
+            hour,
+            minute,
+            isDailyTotal: false,
+          },
+        });
+        periodRecords++;
+      }
+    }
 
     return NextResponse.json({
       success: true,
