@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
         id: user.id,
         username: user.username,
         email: user.email,
-        isGuest: user.is_guest === 1,
-        isAdmin: user.is_admin === 1,
+        isGuest: user.is_guest === true || user.is_guest === 1,
+        isAdmin: user.is_admin === true || user.is_admin === 1,
       },
     });
   } catch (error) {

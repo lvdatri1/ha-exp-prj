@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByUsername, updateLastLogin } from "@/lib/db";
-import { verifyPassword } from "@/lib/auth";
+import { getUserByUsername, updateLastLogin, verifyPassword } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,18 +22,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user
-    const user = getUserByUsername(username);
+    const user = await getUserByUsername(username);
     if (!user) {
       return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
     }
 
     // Verify password
-    if (!user.password_hash || !verifyPassword(password, user.password_hash)) {
+    const isValid = await verifyPassword(user.id, password);
+    if (!isValid) {
       return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
     }
 
     // Update last login
-    updateLastLogin(user.id);
+    await updateLastLogin(user.id);
 
     // Create session
     const response = NextResponse.json({

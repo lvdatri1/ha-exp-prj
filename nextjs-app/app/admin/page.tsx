@@ -81,7 +81,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1600px]">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -94,10 +94,10 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-600">Total Users</p>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">{metrics?.users ?? "-"}</h3>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 mt-2 truncate">
                 <span className="text-blue-600 font-semibold">{metrics?.adminUsers ?? 0}</span> admins,{" "}
                 <span className="text-gray-600 font-semibold">{metrics?.guestUsers ?? 0}</span> guests
               </p>
@@ -117,10 +117,10 @@ export default function AdminDashboardPage() {
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-600">Power Plans</p>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">{metrics?.activePlans ?? "-"}</h3>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 mt-2 truncate">
                 <span className="text-green-600 font-semibold">{metrics?.totalPlans ?? 0}</span> total plans
               </p>
             </div>
@@ -139,12 +139,12 @@ export default function AdminDashboardPage() {
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-600">Energy Data</p>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">
                 {metrics?.energyRecords ? (metrics.energyRecords / 1000).toFixed(1) + "k" : "-"}
               </h3>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 mt-2 truncate">
                 <span className="text-yellow-600 font-semibold">{metrics?.energyRecords?.toLocaleString()}</span>{" "}
                 records
               </p>
@@ -159,12 +159,12 @@ export default function AdminDashboardPage() {
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-600">Gas Data</p>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">
                 {metrics?.gasRecords ? (metrics.gasRecords / 1000).toFixed(1) + "k" : "-"}
               </h3>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 mt-2 truncate">
                 <span className="text-orange-600 font-semibold">{metrics?.gasRecords?.toLocaleString()}</span> records
               </p>
             </div>
@@ -257,8 +257,17 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 truncate">{u.username}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(u.created_at).toLocaleDateString()} at {new Date(u.created_at).toLocaleTimeString()}
+                        <p className="text-xs text-gray-500 truncate">
+                          {new Date(u.created_at).toLocaleDateString("en-NZ", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}{" "}
+                          at{" "}
+                          {new Date(u.created_at).toLocaleTimeString("en-NZ", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       </div>
                     </div>
@@ -301,9 +310,18 @@ export default function AdminDashboardPage() {
                         <p className="font-medium text-gray-900 truncate">
                           {p.retailer} - {p.name}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          Updated {new Date(p.updated_at).toLocaleDateString()} at{" "}
-                          {new Date(p.updated_at).toLocaleTimeString()}
+                        <p className="text-xs text-gray-500 truncate">
+                          Updated{" "}
+                          {new Date(p.updated_at).toLocaleDateString("en-NZ", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}{" "}
+                          at{" "}
+                          {new Date(p.updated_at).toLocaleTimeString("en-NZ", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       </div>
                     </div>
