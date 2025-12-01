@@ -45,12 +45,19 @@ test.describe("Authentication Flow", () => {
   test("should logout successfully", async ({ page }) => {
     await page.goto("/");
 
+    // Wait for guest button to be visible
+    const guestButton = page.getByRole("button", { name: /continue as guest/i });
+    await guestButton.waitFor({ state: "visible", timeout: 10000 });
+
     // Login as guest first
-    await page.getByRole("button", { name: /continue as guest/i }).click();
+    await guestButton.click();
     await expect(page.getByRole("button", { name: /logout/i })).toBeVisible();
 
     // Logout
     await page.getByRole("button", { name: /logout/i }).click();
+
+    // Wait for auth modal to reappear
+    await page.waitForTimeout(500);
 
     // Should show login form again
     await expect(page.getByPlaceholder(/username/i)).toBeVisible();

@@ -3,7 +3,9 @@ import { test, expect } from "@playwright/test";
 test.describe("Dashboard Navigation", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: /continue as guest/i }).click();
+    const guestButton = page.getByRole("button", { name: /continue as guest/i });
+    await guestButton.waitFor({ state: "visible", timeout: 10000 });
+    await guestButton.click();
     await expect(page.getByRole("button", { name: /logout/i })).toBeVisible();
   });
 
@@ -31,7 +33,10 @@ test.describe("Dashboard Navigation", () => {
 test.describe("Charts and Visualizations", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: /continue as guest/i }).click();
+    const guestButton = page.getByRole("button", { name: /continue as guest/i });
+    await guestButton.waitFor({ state: "visible", timeout: 10000 });
+    await guestButton.click();
+    await page.waitForTimeout(500);
     await page.getByRole("button", { name: /analytics/i }).click();
   });
 
@@ -66,7 +71,10 @@ test.describe("Charts and Visualizations", () => {
 test.describe("Tariff Calculator", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: /continue as guest/i }).click();
+    const guestButton = page.getByRole("button", { name: /continue as guest/i });
+    await guestButton.waitFor({ state: "visible", timeout: 10000 });
+    await guestButton.click();
+    await page.waitForTimeout(500);
     await page.getByRole("button", { name: /analytics/i }).click();
   });
 

@@ -6,6 +6,7 @@ This project has been migrated from `better-sqlite3` to Prisma ORM to support mu
 
 - **Development**: SQLite (file-based database)
 - **Production**: PostgreSQL (configurable)
+- **Prisma Version**: 6.x (downgraded from 7.x to avoid client constructor/engine validation errors under Next.js 14)
 
 ## Database Configuration
 
@@ -32,6 +33,7 @@ To switch between SQLite and PostgreSQL, update `prisma/schema.prisma`:
 ```prisma
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 ```
 
@@ -40,6 +42,7 @@ datasource db {
 ```prisma
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 ```
 
@@ -48,6 +51,7 @@ After changing providers:
 1. Update `DATABASE_URL` in `.env`
 2. Run `npm run prisma:generate`
 3. Run `npm run prisma:push` or `npm run prisma:migrate`
+4. For production, prefer `migrate deploy` over `push`.
 
 ## npm Scripts
 
@@ -123,6 +127,8 @@ const plans = await listPowerPlans(true);
 
 **All database operations are now async!** Update all code that calls db functions to use `await`.
 
+Additionally, to preserve backward compatibility with existing tests and UI assumptions, certain API routes normalize boolean fields to legacy numeric flags (1/0). Example: `app/api/power-plans/route.ts` returns `active`, `is_flat_rate`, `has_gas`, `gas_is_flat_rate` as `1/0` even though the DB stores booleans.
+
 ## Migration from SQLite to PostgreSQL
 
 ### Step 1: Export Data from SQLite
@@ -162,7 +168,10 @@ const prismaMock = mockDeep<PrismaClient>();
 
 ### E2E Tests
 
-E2E tests interact with the real database via API endpoints (no changes required).
+E2E tests interact with the real database via API endpoints. To stabilize cross-browser accessibility:
+
+- Ensure headings are unique and unambiguous (avoid duplicate matching names)
+- The main heading renders even when unauthenticated, with the auth modal overlaid
 
 Run tests:
 
@@ -210,6 +219,7 @@ The `lib/db.ts` file maintains the same function signatures and return types as 
 - Same function names and parameters
 - Same return data structures (camelCase → snake_case mapping)
 - Only difference: all functions are now async (return Promises)
+- Some routes apply a response normalization layer (booleans → numeric) temporarily.
 
 This ensures minimal code changes in the rest of the application.
 
@@ -236,7 +246,8 @@ This ensures minimal code changes in the rest of the application.
 - [ ] Update `DATABASE_URL` environment variable for production PostgreSQL
 - [ ] Change `provider` in `prisma/schema.prisma` to `"postgresql"`
 - [ ] Run `npm run prisma:generate` in production build
-- [ ] Run `npm run prisma:migrate` to create database schema
+- [ ] Run `npm run prisma:migrate` to create database schema (or `npx prisma migrate deploy`)
+- [ ] Verify Prisma Client generation in build pipeline
 - [ ] Test all database operations in staging environment
 - [ ] Verify indexes are created correctly
 - [ ] Set up database backups

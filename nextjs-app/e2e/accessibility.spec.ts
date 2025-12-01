@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Accessibility Tests", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
   });
 
   test("should have proper page title", async ({ page }) => {
@@ -45,6 +46,7 @@ test.describe("Responsive Design", () => {
   test("should display on mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible();
   });
@@ -52,6 +54,7 @@ test.describe("Responsive Design", () => {
   test("should display on tablet viewport", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible();
   });
@@ -59,6 +62,7 @@ test.describe("Responsive Design", () => {
   test("should display on desktop viewport", async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible();
   });
