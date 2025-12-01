@@ -11,9 +11,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = getAllGasData(parseInt(userId));
+    const data = await getAllGasData(parseInt(userId));
 
-    const formatted = data.map((record) => ({
+    const formatted = (Array.isArray(data) ? data : []).map((record) => ({
       startTime: record.start_time,
       endTime: record.end_time,
       kwh: record.kwh,

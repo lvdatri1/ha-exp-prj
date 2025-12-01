@@ -7,8 +7,8 @@ export async function POST(request: NextRequest) {
     // Generate unique guest username
     const username = generateGuestUsername();
 
-    // Create guest user
-    const user = createUser(username, null, null, 1);
+    // Create guest user (await async, pass boolean)
+    const user = await createUser(username, null, null, true);
 
     // Create session
     const response = NextResponse.json({

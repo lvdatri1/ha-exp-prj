@@ -59,14 +59,21 @@ export interface PowerPlan {
   updated_at: Date;
 }
 
-// Singleton Prisma Client instance
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+// Singleton Prisma Client instance with proper type declarations
+declare global {
+  // eslint-disable-next-line no-var
+  var __prisma: PrismaClient | undefined;
+}
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+export const prisma =
+  global.__prisma ||
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") {
+  global.__prisma = prisma;
+}
 
 // User operations
 export async function createUser(username: string, email: string | null, password: string | null, isGuest = false) {
@@ -76,7 +83,7 @@ export async function createUser(username: string, email: string | null, passwor
       username,
       email,
       passwordHash,
-      isGuest,
+      isGuest: Boolean(isGuest),
     },
   });
   return mapUserToLegacyFormat(user);

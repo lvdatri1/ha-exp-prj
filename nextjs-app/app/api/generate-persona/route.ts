@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, insertGasData } from "@/lib/db";
+import { insertEnergyData, insertGasData, clearDatabase, clearGasData } from "@/lib/db";
 
 interface PersonaPattern {
   night: number;
@@ -166,13 +166,13 @@ export async function POST(request: NextRequest) {
     }
 
     const persona = PERSONAS[personaKey];
-    const db = getDb();
+    const userIdInt = parseInt(userId);
 
     // Clear existing data if requested
     if (clearExisting) {
-      db.prepare("DELETE FROM energy_data WHERE user_id = ?").run(parseInt(userId));
+      await clearDatabase(userIdInt);
       if (hasGas) {
-        db.prepare("DELETE FROM gas_data WHERE user_id = ?").run(parseInt(userId));
+        await clearGasData(userIdInt);
       }
     }
 
@@ -185,62 +185,41 @@ export async function POST(request: NextRequest) {
       hasGas || false
     );
 
-    // Insert electricity data
-    const insertStmt = db.prepare(`
-      INSERT INTO energy_data (user_id, start_time, end_time, kwh, date, hour, minute, is_daily_total)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const insertMany = db.transaction((records: any[]) => {
-      for (const record of records) {
-        insertStmt.run(
-          record.user_id,
-          record.start_time,
-          record.end_time,
-          record.kwh,
-          record.date,
-          record.hour,
-          record.minute,
-          record.is_daily_total
-        );
-      }
-    });
-
-    insertMany(electricRecords);
+    // Insert electricity data via Prisma
+    await insertEnergyData(
+      electricRecords.map((r: any) => ({
+        user_id: r.user_id,
+        start_time: r.start_time,
+        end_time: r.end_time,
+        kwh: r.kwh,
+        date: r.date,
+        hour: r.hour,
+        minute: r.minute,
+        is_daily_total: r.is_daily_total === 1,
+      })),
+      userIdInt
+    );
 
     let gasRecordsCount = 0;
     let gasMessage = "";
 
     // Generate and insert gas data if hasGas is true
     if (hasGas) {
-      const gasRecords = generateGasData(
-        personaKey,
-        parseInt(userId),
-        startDate || "2024-01-01",
-        endDate || "2024-12-31"
+      const gasRecords = generateGasData(personaKey, userIdInt, startDate || "2024-01-01", endDate || "2024-12-31");
+
+      await insertGasData(
+        gasRecords.map((r: any) => ({
+          user_id: r.user_id,
+          start_time: r.start_time,
+          end_time: r.end_time,
+          kwh: r.kwh,
+          date: r.date,
+          hour: r.hour,
+          minute: r.minute,
+          is_daily_total: r.is_daily_total === 1,
+        })),
+        userIdInt
       );
-
-      const insertGasStmt = db.prepare(`
-        INSERT INTO gas_data (user_id, start_time, end_time, kwh, date, hour, minute, is_daily_total)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const insertGasMany = db.transaction((records: any[]) => {
-        for (const record of records) {
-          insertGasStmt.run(
-            record.user_id,
-            record.start_time,
-            record.end_time,
-            record.kwh,
-            record.date,
-            record.hour,
-            record.minute,
-            record.is_daily_total
-          );
-        }
-      });
-
-      insertGasMany(gasRecords);
       gasRecordsCount = gasRecords.length;
       gasMessage = ` and ${gasRecordsCount} gas records`;
     }
