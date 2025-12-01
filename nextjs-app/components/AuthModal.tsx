@@ -69,7 +69,7 @@ export default function AuthModal({ onSuccess }: AuthModalProps) {
   return (
     <div className="auth-modal-overlay">
       <div className="auth-modal">
-        <h2>⚡ Energy Dashboard</h2>
+        <h2 aria-label="Sign In">Sign In</h2>
         <p className="subtitle">Sign in to save your data and settings</p>
 
         <div className="auth-tabs">

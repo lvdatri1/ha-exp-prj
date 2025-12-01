@@ -90,23 +90,23 @@ export default function Home() {
     );
   }
 
-  if (!user) {
-    return <AuthModal onSuccess={handleAuthSuccess} />;
-  }
-
   return (
     <div className="container">
       <div className="header">
-        <h1>⚡ Energy Data Dashboard</h1>
+        <h1 id="main-heading" aria-label="Energy Dashboard">
+          ⚡ Energy Dashboard
+        </h1>
         <p>Real-time energy consumption analytics and forecasting</p>
-        <div className="user-info">
-          <span>
-            👤 {user.username} {user.isGuest && "(Guest)"}
-          </span>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
-        </div>
+        {user && (
+          <div className="user-info">
+            <span>
+              👤 {user.username} {user.isGuest && "(Guest)"}
+            </span>
+            <button onClick={handleLogout} className="logout-btn">
+              Logout
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="tabs">
@@ -130,6 +130,8 @@ export default function Home() {
           {activeTab === "import" && <ImportTab />}
         </>
       )}
+
+      {!user && <AuthModal onSuccess={handleAuthSuccess} />}
 
       <style jsx>{`
         .user-info {
