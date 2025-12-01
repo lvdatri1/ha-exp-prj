@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="admin-layout min-h-screen bg-gray-100">
+    <div className="admin-layout min-h-screen bg-gray-100 flex flex-col">
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
@@ -151,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 flex flex-col flex-1 min-h-screen">
         {/* Top bar */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -172,7 +172,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );
