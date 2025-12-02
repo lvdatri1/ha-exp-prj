@@ -20,14 +20,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if username already exists
-    const existingUser = getUserByUsername(username);
+    const existingUser = await getUserByUsername(username);
     if (existingUser) {
       return NextResponse.json({ error: "Username already exists" }, { status: 409 });
     }
 
     // Check if email already exists (if provided)
     if (email) {
-      const existingEmail = getUserByEmail(email);
+      const existingEmail = await getUserByEmail(email);
       if (existingEmail) {
         return NextResponse.json({ error: "Email already registered" }, { status: 409 });
       }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Create user
     const passwordHash = hashPassword(password);
-    const user = createUser(username, email || null, passwordHash, 0);
+    const user = await createUser(username, email || null, passwordHash, false);
 
     // Create session
     const response = NextResponse.json({
