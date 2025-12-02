@@ -15,7 +15,7 @@ async function requireAdmin() {
     where: { id: sessionData.userId },
   });
 
-  if (!user || user.is_admin !== 1) {
+  if (!user || !user.isAdmin) {
     return null;
   }
 
@@ -38,18 +38,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json();
 
     // Support both isAdmin (boolean) and is_admin (number) for backward compatibility
-    let isAdminValue: number;
+    let isAdminValue: boolean;
     if (typeof body.isAdmin === "boolean") {
-      isAdminValue = body.isAdmin ? 1 : 0;
+      isAdminValue = body.isAdmin;
     } else if (typeof body.is_admin === "number") {
-      isAdminValue = body.is_admin;
+      isAdminValue = body.is_admin === 1;
     } else {
       return NextResponse.json({ error: "isAdmin boolean or is_admin number required" }, { status: 400 });
     }
 
     const updated = await prisma.user.update({
       where: { id },
-      data: { is_admin: isAdminValue },
+      data: { isAdmin: isAdminValue },
     });
 
     return NextResponse.json({ user: updated });
