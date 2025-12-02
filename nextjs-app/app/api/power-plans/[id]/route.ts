@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPowerPlanById, updatePowerPlan, deletePowerPlan, getUserById } from "@/lib/db";
 
-function requireAdmin(request: NextRequest) {
+async function requireAdmin(request: NextRequest) {
   const userId = request.cookies.get("session_user_id")?.value;
   if (!userId) return null;
-  const user = getUserById(parseInt(userId));
-  if (!user || user.is_admin !== 1) return null;
+  const user = await getUserById(parseInt(userId));
+  if (!user || !user.isAdmin) return null;
   return user;
 }
 

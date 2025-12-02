@@ -169,32 +169,25 @@ export default function ImportTab() {
   };
 
   return (
-    <div className="import-tab">
-      <h2>Import Energy Data</h2>
-
-      <div className="import-container">
-        {/* Sample Data Generator */}
-        <div className="import-form" style={{ marginBottom: "20px", borderLeft: "4px solid #4caf50" }}>
-          <h3 style={{ marginTop: 0, color: "#4caf50" }}>🎭 Generate Sample Data (Household Personas)</h3>
-          <p style={{ color: "#666", fontSize: "0.9rem", marginBottom: "15px" }}>
+    <div className="space-y-6">
+      {/* Sample Data Generator */}
+      <div className="card bg-base-100 shadow">
+        <div className="card-body">
+          <h3 className="card-title">🎭 Generate Sample Data (Household Personas)</h3>
+          <p className="text-base-content/70 text-sm">
             Quickly populate your dashboard with realistic energy consumption data based on common household types.
             Perfect for testing and exploring features!
           </p>
 
-          <div className="form-group">
-            <label htmlFor="persona-select">Select Household Type:</label>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Select Household Type</span>
+            </label>
             <select
-              id="persona-select"
               value={selectedPersona}
               onChange={(e) => setSelectedPersona(e.target.value)}
               disabled={generating}
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "8px",
-                border: "2px solid #ddd",
-                fontSize: "15px",
-              }}
+              className="select select-bordered w-full focus:select-primary transition-colors duration-200"
             >
               {personas.map((persona) => (
                 <option key={persona.id} value={persona.id}>
@@ -203,156 +196,178 @@ export default function ImportTab() {
               ))}
             </select>
             {selectedPersona && (
-              <small style={{ display: "block", marginTop: "8px", color: "#666" }}>
-                {personas.find((p) => p.id === selectedPersona)?.description}
-              </small>
+              <label className="label">
+                <span className="label-text-alt text-base-content/70">
+                  {personas.find((p) => p.id === selectedPersona)?.description}
+                </span>
+              </label>
             )}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "15px" }}>
-            <div className="form-group">
-              <label htmlFor="start-date">Start Date:</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Start Date</span>
+              </label>
               <input
-                id="start-date"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 disabled={generating}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "2px solid #ddd",
-                }}
+                className="input input-bordered w-full focus:input-primary transition-colors duration-200"
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="end-date">End Date:</label>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">End Date</span>
+              </label>
               <input
-                id="end-date"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 disabled={generating}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "2px solid #ddd",
-                }}
+                className="input input-bordered w-full focus:input-primary transition-colors duration-200"
               />
             </div>
           </div>
 
-          <div className="form-group checkbox-group">
-            <label>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-3">
               <input
                 type="checkbox"
                 checked={hasGas}
                 onChange={(e) => setHasGas(e.target.checked)}
                 disabled={generating}
+                className="checkbox"
               />
-              <span>Household has gas for cooking/heating</span>
+              <span className="label-text">Household has gas for cooking/heating</span>
             </label>
-            <small className="help-text">
-              {hasGas
-                ? "🔥 Energy consumption will be reduced (gas used for cooking and/or heating)"
-                : "⚡ All energy needs are electric (cooking, heating, etc.)"}
-            </small>
+            <label className="label">
+              <span className="label-text-alt text-base-content/70">
+                {hasGas
+                  ? "🔥 Energy consumption will be reduced (gas used for cooking and/or heating)"
+                  : "⚡ All energy needs are electric (cooking, heating, etc.)"}
+              </span>
+            </label>
           </div>
 
-          <div className="form-group checkbox-group">
-            <label>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-3">
               <input
                 type="checkbox"
                 checked={clearExisting}
                 onChange={(e) => setClearExisting(e.target.checked)}
                 disabled={generating}
+                className="checkbox"
               />
-              <span>Clear existing data before generating</span>
+              <span className="label-text">Clear existing data before generating</span>
             </label>
-            <small className="help-text">
-              {clearExisting
-                ? "⚠️ This will delete all your existing data and replace it with sample data"
-                : "Sample data will be added to your existing data"}
-            </small>
+            <label className="label">
+              <span className="label-text-alt text-base-content/70">
+                {clearExisting
+                  ? "⚠️ This will delete all your existing data and replace it with sample data"
+                  : "Sample data will be added to your existing data"}
+              </span>
+            </label>
           </div>
 
           <button
             onClick={handleGeneratePersona}
             disabled={!selectedPersona || generating}
-            className="btn-persona"
-            style={{
-              width: "100%",
-              padding: "14px",
-              background: "#4caf50",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-              cursor: generating ? "not-allowed" : "pointer",
-              opacity: generating ? 0.7 : 1,
-            }}
+            className="btn btn-primary w-full gap-2 transition-colors duration-200"
           >
-            {generating ? "Generating Sample Data..." : "🎲 Generate Sample Data"}
+            {generating ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Generating Sample Data...
+              </>
+            ) : (
+              <>🎲 Generate Sample Data</>
+            )}
           </button>
         </div>
+      </div>
 
-        <div style={{ textAlign: "center", margin: "20px 0", color: "#999", fontWeight: 600 }}>OR</div>
+      <div className="divider my-5">OR</div>
 
-        {/* CSV Import */}
-        <div className="import-form">
-          <h3 style={{ marginTop: 0 }}>📁 Import from CSV File</h3>
-          <div className="form-group">
-            <label htmlFor="csv-file">Select CSV File:</label>
-            <input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} disabled={importing} />
+      {/* CSV Import */}
+      <div className="card bg-base-100 shadow">
+        <div className="card-body">
+          <h3 className="card-title">📁 Import from CSV File</h3>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Select CSV File</span>
+            </label>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              disabled={importing}
+              className="file-input file-input-bordered w-full transition-colors duration-200"
+            />
             {file && (
-              <div className="file-info">
-                <small>
+              <label className="label">
+                <span className="label-text-alt text-base-content/70">
                   Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                </small>
-              </div>
+                </span>
+              </label>
             )}
           </div>
 
-          <div className="form-group checkbox-group">
-            <label>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-3">
               <input
                 type="checkbox"
                 checked={override}
                 onChange={(e) => setOverride(e.target.checked)}
                 disabled={importing}
+                className="checkbox"
               />
-              <span>Override existing data</span>
+              <span className="label-text">Override existing data</span>
             </label>
-            <small className="help-text">
-              {override
-                ? "⚠️ This will delete all existing data and replace it with the imported data"
-                : "Only new records will be imported, existing records will be skipped"}
-            </small>
+            <label className="label">
+              <span className="label-text-alt text-base-content/70">
+                {override
+                  ? "⚠️ This will delete all existing data and replace it with the imported data"
+                  : "Only new records will be imported, existing records will be skipped"}
+              </span>
+            </label>
           </div>
 
-          <button onClick={handleImport} disabled={!file || importing} className="btn-primary">
-            {importing ? "Importing..." : "Import CSV"}
+          <button
+            onClick={handleImport}
+            disabled={!file || importing}
+            className="btn btn-primary w-full gap-2 transition-colors duration-200"
+          >
+            {importing ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Importing...
+              </>
+            ) : (
+              <>📥 Import CSV</>
+            )}
           </button>
         </div>
+      </div>
 
-        {result && (
-          <div className={`import-result ${result.success ? "success" : "error"}`}>
-            <h3>{result.success ? "✓ Success" : "✗ Error"}</h3>
+      {result && (
+        <div className={`alert ${result.success ? "alert-success" : "alert-error"}`}>
+          <div>
+            <h3 className="font-bold">{result.success ? "✓ Success" : "✗ Error"}</h3>
             <p>{result.message}</p>
 
             {result.error && (
-              <div className="error-details">
+              <div className="mt-2 p-2 bg-base-200 rounded">
                 <strong>Error:</strong> {result.error}
               </div>
             )}
 
             {result.stats && (
-              <div className="import-stats">
-                <h4>Import Statistics:</h4>
-                <ul>
+              <div className="mt-3">
+                <h4 className="font-semibold mb-2">Import Statistics:</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>
                     Total records processed: <strong>{result.stats.total}</strong>
                   </li>
@@ -372,183 +387,35 @@ export default function ImportTab() {
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="import-instructions">
-          <h3>CSV Format Requirements:</h3>
-          <ul>
+      <div className="card bg-base-100 shadow">
+        <div className="card-body">
+          <h3 className="card-title">CSV Format Requirements</h3>
+          <ul className="list-disc list-inside space-y-1 text-sm">
             <li>File must be in CSV format with headers</li>
             <li>
-              Required columns: <code>Date</code>, <code>Period</code>, <code>Consumption (kWh)</code>
+              Required columns: <code className="bg-base-200 px-2 py-1 rounded">Date</code>,{" "}
+              <code className="bg-base-200 px-2 py-1 rounded">Period</code>,{" "}
+              <code className="bg-base-200 px-2 py-1 rounded">Consumption (kWh)</code>
             </li>
             <li>Date format: YYYY-MM-DD</li>
             <li>Period: 1-48 for half-hourly intervals, or empty/0 for daily totals</li>
             <li>Consumption: numeric value in kWh</li>
           </ul>
 
-          <h4>Example:</h4>
-          <pre>{`Date,Period,Consumption (kWh)
+          <div className="mt-4">
+            <h4 className="font-semibold mb-2">Example:</h4>
+            <pre className="bg-base-200 p-4 rounded text-sm overflow-x-auto">
+              {`Date,Period,Consumption (kWh)
 2024-01-01,1,0.234
 2024-01-01,2,0.189
-2024-01-01,,5.678`}</pre>
+2024-01-01,,5.678`}
+            </pre>
+          </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .import-tab {
-          padding: 20px;
-        }
-
-        .import-container {
-          max-width: 800px;
-        }
-
-        .import-form {
-          background: white;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          margin-bottom: 20px;
-        }
-
-        .form-group {
-          margin-bottom: 20px;
-        }
-
-        .form-group label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 500;
-        }
-
-        .form-group input[type="file"] {
-          display: block;
-          width: 100%;
-          padding: 8px;
-          border: 2px dashed #ccc;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-
-        .file-info {
-          margin-top: 8px;
-          color: #666;
-        }
-
-        .checkbox-group label {
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-          margin-right: 8px;
-          width: auto;
-        }
-
-        .help-text {
-          display: block;
-          margin-top: 8px;
-          color: #666;
-          font-size: 0.9em;
-        }
-
-        .btn-primary {
-          background: #0070f3;
-          color: white;
-          border: none;
-          padding: 12px 24px;
-          border-radius: 4px;
-          font-size: 16px;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-          background: #0051cc;
-        }
-
-        .btn-primary:disabled {
-          background: #ccc;
-          cursor: not-allowed;
-        }
-
-        .import-result {
-          padding: 20px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-        }
-
-        .import-result.success {
-          background: #d4edda;
-          border: 1px solid #c3e6cb;
-          color: #155724;
-        }
-
-        .import-result.error {
-          background: #f8d7da;
-          border: 1px solid #f5c6cb;
-          color: #721c24;
-        }
-
-        .import-result h3 {
-          margin-top: 0;
-        }
-
-        .error-details {
-          margin-top: 10px;
-          padding: 10px;
-          background: rgba(0, 0, 0, 0.05);
-          border-radius: 4px;
-        }
-
-        .import-stats {
-          margin-top: 15px;
-        }
-
-        .import-stats h4 {
-          margin-bottom: 10px;
-        }
-
-        .import-stats ul {
-          list-style: none;
-          padding: 0;
-        }
-
-        .import-stats li {
-          padding: 5px 0;
-        }
-
-        .import-instructions {
-          background: #f8f9fa;
-          padding: 20px;
-          border-radius: 8px;
-          border-left: 4px solid #0070f3;
-        }
-
-        .import-instructions h3 {
-          margin-top: 0;
-        }
-
-        .import-instructions ul {
-          margin: 10px 0;
-        }
-
-        .import-instructions code {
-          background: #e9ecef;
-          padding: 2px 6px;
-          border-radius: 3px;
-          font-family: monospace;
-        }
-
-        .import-instructions pre {
-          background: #fff;
-          padding: 15px;
-          border-radius: 4px;
-          overflow-x: auto;
-          border: 1px solid #dee2e6;
-        }
-      `}</style>
     </div>
   );
 }

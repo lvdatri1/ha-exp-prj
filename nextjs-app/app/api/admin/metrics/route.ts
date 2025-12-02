@@ -5,7 +5,7 @@ async function requireAdmin(request: NextRequest) {
   const userId = request.cookies.get("session_user_id")?.value;
   if (!userId) return null;
   const user = await getUserById(parseInt(userId));
-  if (!user || (user.is_admin !== true && user.is_admin !== 1)) return null;
+  if (!user || !user.is_admin) return null;
   return user;
 }
 

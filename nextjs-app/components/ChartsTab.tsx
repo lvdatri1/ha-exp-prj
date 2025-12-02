@@ -325,121 +325,146 @@ export default function ChartsTab({ allData, gasData = [] }: ChartsTabProps) {
   );
 
   const renderNavigationBar = () => {
-    const baseStyle = {
-      padding: "8px 16px",
-      border: "none",
-      borderRadius: "6px",
-      cursor: "pointer",
-      fontSize: "0.9rem",
-      fontWeight: "500",
-    };
-
     if (viewMode === "monthly") {
       return (
-        <div style={{ marginBottom: "20px" }}>
-          <p style={{ color: "#666", fontSize: "0.95rem" }}>💡 Click on a month bar to see daily usage breakdown</p>
+        <div className="alert">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>Click a month bar to see daily usage breakdown</span>
         </div>
       );
     }
 
     if (viewMode === "daily") {
       return (
-        <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px", flexWrap: "wrap" }}>
-          <button onClick={handleBackToMonthly} style={{ ...baseStyle, backgroundColor: "#667eea" }}>
-            ← Back to Monthly View
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={handleBackToMonthly} className="btn btn-outline btn-sm gap-2 transition-colors duration-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Monthly View
           </button>
-          <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>
-            💡 Viewing {selectedMonth} - Click on a day to see hourly usage
-          </p>
+          <div className="badge badge-neutral gap-2">💡 Viewing {selectedMonth}. Click a day to see hourly usage.</div>
         </div>
       );
     }
 
     if (viewMode === "hourly") {
       return (
-        <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px", flexWrap: "wrap" }}>
-          <button onClick={handleBackToDaily} style={{ ...baseStyle, backgroundColor: "#667eea" }}>
-            ← Back to Daily View
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={handleBackToDaily} className="btn btn-outline btn-sm gap-2 transition-colors duration-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Daily View
           </button>
-          <button onClick={handleBackToMonthly} style={{ ...baseStyle, backgroundColor: "#764ba2" }}>
-            ← Back to Monthly View
+          <button onClick={handleBackToMonthly} className="btn btn-outline btn-sm gap-2 transition-colors duration-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Monthly View
           </button>
-          <p style={{ color: "#666", fontSize: "0.95rem", margin: 0 }}>📊 Viewing 24-hour usage for {selectedDay}</p>
+          <div className="badge badge-neutral">📊 Viewing 24-hour usage for {selectedDay}</div>
         </div>
       );
     }
   };
 
   return (
-    <div className="tab-content active">
+    <div className="space-y-6 p-4">
       {renderNavigationBar()}
 
       <TariffCalculator allData={allData} gasData={gasData} />
 
       {viewMode === "monthly" && (
-        <div className="chart-container">
-          <h3 style={{ marginBottom: "15px", color: "#333" }}>Monthly Energy Consumption</h3>
-          <Bar data={monthlyChartData} options={barOptions} />
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6">
+            <h3 className="card-title mb-4">Monthly Energy Consumption</h3>
+            <Bar data={monthlyChartData} options={barOptions} />
+          </div>
         </div>
       )}
 
       {viewMode === "daily" && (
-        <div className="chart-container">
-          <h3 style={{ marginBottom: "15px", color: "#333" }}>Daily Energy Consumption - {selectedMonth}</h3>
-          <Line data={dailyChartData} options={lineOptions} />
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6">
+            <h3 className="card-title mb-4">Daily Energy Consumption - {selectedMonth}</h3>
+            <Line data={dailyChartData} options={lineOptions} />
+          </div>
         </div>
       )}
 
       {viewMode === "hourly" && hourlyChartData && (
-        <div className="chart-container">
-          <h3 style={{ marginBottom: "15px", color: "#333" }}>24-Hour Usage - {selectedDay}</h3>
-          <Bar data={hourlyChartData} options={hourlyBarOptions} />
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6">
+            <h3 className="card-title mb-4">24-Hour Usage - {selectedDay}</h3>
+            <Bar data={hourlyChartData} options={hourlyBarOptions} />
+          </div>
         </div>
       )}
 
       {viewMode === "monthly" && (
         <>
-          <div className="chart-container">
-            <h3 style={{ marginBottom: "15px", color: "#333" }}>Hourly Distribution</h3>
-            <Bar data={hourlyDistData} options={hourlyBarOptions} />
-          </div>
-
-          <div className="chart-container">
-            <h3 style={{ marginBottom: "15px", color: "#333" }}>Day of Week Pattern</h3>
-            <Bar data={dowData} options={hourlyBarOptions} />
-          </div>
-
-          <div className="chart-container">
-            <h3 style={{ marginBottom: "15px", color: "#333" }}>24-Hour Usage by Date</h3>
-            <div className="controls" style={{ marginBottom: "15px" }}>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                style={{
-                  padding: "8px 12px",
-                  border: "2px solid #ddd",
-                  borderRadius: "6px",
-                  fontSize: "1rem",
-                }}
-              />
-              <button
-                onClick={handleClearDate}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#667eea",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "0.9rem",
-                  fontWeight: "500",
-                }}
-              >
-                Clear
-              </button>
+          <div className="card bg-base-100 shadow">
+            <div className="card-body p-6">
+              <h3 className="card-title mb-4">Hourly Distribution</h3>
+              <Bar data={hourlyDistData} options={hourlyBarOptions} />
             </div>
-            {hourlyUsageData && <Bar data={hourlyUsageData} options={hourlyBarOptions} />}
+          </div>
+
+          <div className="card bg-base-100 shadow">
+            <div className="card-body p-6">
+              <h3 className="card-title mb-4">Day of Week Pattern</h3>
+              <Bar data={dowData} options={hourlyBarOptions} />
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow">
+            <div className="card-body p-6">
+              <h3 className="card-title mb-4">24-Hour Usage by Date</h3>
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="input input-bordered focus:input-primary transition-colors duration-200"
+                />
+                <button onClick={handleClearDate} className="btn btn-outline transition-colors duration-200">
+                  Clear
+                </button>
+              </div>
+              {hourlyUsageData && <Bar data={hourlyUsageData} options={hourlyBarOptions} />}
+            </div>
           </div>
         </>
       )}

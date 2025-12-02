@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import MetricCard from "../../components/admin/MetricCard";
-import QuickActionCard from "../../components/admin/QuickActionCard";
-import RecentList from "../../components/admin/RecentList";
 
 interface SessionUser {
   id: number;
@@ -54,19 +51,27 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg font-medium">Loading...</div>
-        </div>
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg font-medium">Please log in to continue.</div>
+      <div className="min-h-screen bg-base-200 flex items-center justify-center p-4">
+        <div className="card w-full max-w-md bg-base-100 shadow-xl">
+          <div className="card-body text-center">
+            <h2 className="card-title justify-center text-2xl">🔐 Admin Dashboard</h2>
+            <p className="text-base-content/70">Authentication Required</p>
+            <div className="divider"></div>
+            <p>Please log in to access the admin dashboard.</p>
+            <div className="card-actions justify-center">
+              <a href="/" className="btn btn-primary">
+                Go to Login
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -74,124 +79,156 @@ export default function AdminDashboardPage() {
 
   if (!canAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg font-medium">Access denied: Admins only.</div>
+      <div className="min-h-screen bg-base-200 flex items-center justify-center p-4">
+        <div className="card w-full max-w-md bg-base-100 shadow-xl">
+          <div className="card-body text-center">
+            <h2 className="card-title justify-center text-2xl">🔐 Admin Dashboard</h2>
+            <p className="text-error font-semibold">Access Denied</p>
+            <div className="divider"></div>
+            <p>You need administrator privileges to access this area.</p>
+            <div className="card-actions justify-center">
+              <a href="/" className="btn btn-primary">
+                Back to Home
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  const metricCards = [
-    {
-      title: "Total Users",
-      value: metrics?.users ?? "-",
-      subtitle: `${metrics?.adminUsers ?? 0} admins, ${metrics?.guestUsers ?? 0} guests`,
-      color: "blue" as const,
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-          />
-        </svg>
-      ),
-    },
-    {
-      title: "Power Plans",
-      value: metrics?.activePlans ?? "-",
-      subtitle: `${metrics?.totalPlans ?? 0} total plans`,
-      color: "green" as const,
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-    },
-    {
-      title: "Energy Data",
-      value: metrics?.energyRecords ? (metrics.energyRecords / 1000).toFixed(1) + "k" : "-",
-      subtitle: `${metrics?.energyRecords?.toLocaleString() ?? 0} records`,
-      color: "yellow" as const,
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-    },
-    {
-      title: "Gas Data",
-      value: metrics?.gasRecords ? (metrics.gasRecords / 1000).toFixed(1) + "k" : "-",
-      subtitle: `${metrics?.gasRecords?.toLocaleString() ?? 0} records`,
-      color: "orange" as const,
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
-          />
-        </svg>
-      ),
-    },
-  ];
-
   return (
-    <div className="space-y-6 max-w-[1600px]">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-600 mt-1">Overview of your energy management system</p>
-      </div>
+    <div className="min-h-screen bg-base-200 admin-layout">
+      <div className="w-full max-w-none mx-auto px-4 lg:px-6 py-4 lg:py-6">
+        {/* Header Card */}
+        <div className="card bg-base-100 shadow-lg border-b-4 border-primary mb-6">
+          <div className="card-body">
+            <h1 className="card-title text-3xl font-bold">⚙️ Admin Dashboard</h1>
+            <p className="text-base-content/60">System Overview and Management</p>
+            {user && (
+              <div className="flex items-center gap-3 mt-2">
+                <div className="badge badge-neutral">
+                  👤 {user.username} {user.isGuest && "(Guest)"}
+                </div>
+                <a href="/" className="btn btn-sm btn-ghost">
+                  Back to Dashboard
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
+        {error && (
+          <div className="alert alert-error mb-6">
+            <span>{error}</span>
+          </div>
+        )}
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {metricCards.map((m) => (
-          <MetricCard
-            key={m.title}
-            title={m.title}
-            value={m.value}
-            subtitle={m.subtitle}
-            icon={m.icon}
-            color={m.color}
-          />
-        ))}
-      </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="stats shadow bg-base-100">
+            <div className="stat">
+              <div className="stat-title">Total Users</div>
+              <div className="stat-value text-primary">{metrics?.users?.toLocaleString() ?? "-"}</div>
+              <div className="stat-desc">
+                {metrics?.adminUsers ?? 0} admins • {metrics?.guestUsers ?? 0} guests
+              </div>
+            </div>
+          </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QuickActionCard
-          href="/admin/power-plans"
-          title="Manage Power Plans"
-          description="Create, edit and deactivate tariff plans"
-          color="blue"
-        />
-        <QuickActionCard
-          href="/admin/users"
-          title="Manage Users"
-          description="Grant or revoke admin privileges"
-          color="green"
-        />
-      </div>
+          <div className="stats shadow bg-base-100">
+            <div className="stat">
+              <div className="stat-title">Active Plans</div>
+              <div className="stat-value text-secondary">{metrics?.activePlans?.toLocaleString() ?? "-"}</div>
+              <div className="stat-desc">{metrics?.totalPlans ?? 0} total plans</div>
+            </div>
+          </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentList title="Recent Users" type="users" items={metrics?.recentUsers || []} emptyText="No recent users" />
-        <RecentList
-          title="Recent Plan Updates"
-          type="plans"
-          items={metrics?.recentPlans || []}
-          emptyText="No recent plan updates"
-        />
+          <div className="stats shadow bg-base-100">
+            <div className="stat">
+              <div className="stat-title">Energy Records</div>
+              <div className="stat-value text-accent">
+                {metrics?.energyRecords ? (metrics.energyRecords / 1000).toFixed(1) + "k" : "-"}
+              </div>
+              <div className="stat-desc">Electricity data points</div>
+            </div>
+          </div>
+
+          <div className="stats shadow bg-base-100">
+            <div className="stat">
+              <div className="stat-title">Gas Records</div>
+              <div className="stat-value text-success">
+                {metrics?.gasRecords ? (metrics.gasRecords / 1000).toFixed(1) + "k" : "-"}
+              </div>
+              <div className="stat-desc">Gas data points</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <a href="/admin/power-plans" className="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+            <div className="card-body">
+              <h3 className="card-title text-primary">⚡ Power Plans</h3>
+              <p className="text-base-content/60">Create and manage tariff plans</p>
+            </div>
+          </a>
+          <a href="/admin/users" className="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+            <div className="card-body">
+              <h3 className="card-title text-primary">👥 User Management</h3>
+              <p className="text-base-content/60">Manage users and permissions</p>
+            </div>
+          </a>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card bg-base-100 shadow">
+            <div className="card-body">
+              <h3 className="card-title text-lg">👤 Recent Users</h3>
+              <div className="space-y-2 mt-2">
+                {(metrics?.recentUsers || []).slice(0, 5).map((u) => (
+                  <div key={u.id} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                    <div>
+                      <div className="font-semibold">{u.username}</div>
+                      <div className="text-sm text-base-content/60">
+                        {new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </div>
+                    </div>
+                    <span className="badge badge-ghost">#{u.id}</span>
+                  </div>
+                ))}
+                {(metrics?.recentUsers?.length || 0) === 0 && (
+                  <div className="text-center py-8 text-base-content/50">No recent users</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow">
+            <div className="card-body">
+              <h3 className="card-title text-lg">⚡ Recent Plan Updates</h3>
+              <div className="space-y-2 mt-2">
+                {(metrics?.recentPlans || []).slice(0, 5).map((p) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                    <div>
+                      <div className="font-semibold">
+                        {p.retailer} - {p.name}
+                      </div>
+                      <div className="text-sm text-base-content/60">
+                        {new Date(p.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </div>
+                    </div>
+                    <span className="badge badge-ghost">#{p.id}</span>
+                  </div>
+                ))}
+                {(metrics?.recentPlans?.length || 0) === 0 && (
+                  <div className="text-center py-8 text-base-content/50">No recent plan updates</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

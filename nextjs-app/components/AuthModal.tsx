@@ -9,6 +9,7 @@ interface AuthModalProps {
 export default function AuthModal({ onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -67,254 +68,135 @@ export default function AuthModal({ onSuccess }: AuthModalProps) {
   };
 
   return (
-    <div className="auth-modal-overlay">
-      <div className="auth-modal">
-        <h2 aria-label="Sign In">Sign In</h2>
-        <p className="subtitle">Sign in to save your data and settings</p>
-
-        <div className="auth-tabs">
-          <button className={`auth-tab ${mode === "login" ? "active" : ""}`} onClick={() => setMode("login")}>
-            Login
-          </button>
-          <button className={`auth-tab ${mode === "signup" ? "active" : ""}`} onClick={() => setMode("signup")}>
-            Sign Up
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Solid, dimmed backdrop to avoid transparency issues */}
+      <div className="fixed inset-0 bg-black/60"></div>
+      {/* Solid card with consistent spacing and alignment */}
+      <div className="modal-box max-w-md relative z-10 shadow-xl rounded-xl bg-base-100 border border-base-300 px-6 py-6">
+        {/* Header with app title only */}
+        <div className="mb-5">
+          <h2 className="text-2xl font-bold">{mode === "login" ? "Sign in" : "Create your account"}</h2>
+          <p className="text-sm text-base-content/70">Welcome to our app.</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
-              required
-              minLength={3}
-              disabled={loading}
-            />
-          </div>
+        {/* Removed quick role buttons for a cleaner modal */}
 
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Username for login mode */}
+          {mode === "login" && (
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Username*</span>
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                className="input input-bordered w-full focus:input-primary transition-colors duration-200"
+                disabled={loading}
+                required
+              />
+            </div>
+          )}
+          {/* Email address */}
           {mode === "signup" && (
-            <div className="form-group">
-              <label>Email (optional)</label>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Email address*</span>
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email"
+                placeholder="Enter your email address"
+                className="input input-bordered w-full focus:input-primary transition-colors duration-200"
                 disabled={loading}
+                required
               />
             </div>
           )}
 
-          <div className="form-group">
-            <label>Password</label>
+          {/* Password */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Password*</span>
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder="************"
+              className="input input-bordered w-full focus:input-primary transition-colors duration-200"
               required
               minLength={6}
               disabled={loading}
             />
           </div>
 
-          {error && <div className="error-message">{error}</div>}
+          {/* Remember / Forgot */}
+          <div className="flex items-center justify-between text-sm">
+            <label className="label cursor-pointer gap-2">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-sm"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span className="label-text">Remember Me</span>
+            </label>
+            <a className="link">Forgot Password?</a>
+          </div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Please wait..." : mode === "login" ? "Login" : "Create Account"}
+          {/* Error */}
+          {error && (
+            <div className="alert alert-error">
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Submit */}
+          <button type="submit" className="btn btn-primary w-full transition-colors duration-200" disabled={loading}>
+            {loading ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Please wait...
+              </>
+            ) : mode === "login" ? (
+              "Sign in"
+            ) : (
+              "Create account"
+            )}
           </button>
         </form>
 
-        <div className="divider">
-          <span>OR</span>
+        {/* Sign up link */}
+        <div className="mt-4 text-sm text-center">
+          {mode === "login" ? (
+            <>
+              New on our platform?{" "}
+              <button className="link link-primary" onClick={() => setMode("signup")}>
+                Create an account
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button className="link link-primary" onClick={() => setMode("login")}>
+                Sign in
+              </button>
+            </>
+          )}
         </div>
 
-        <button onClick={handleGuest} className="btn-guest" disabled={loading}>
+        {/* Removed Google sign-in for a simpler modal */}
+
+        {/* Guest */}
+        <button onClick={handleGuest} className="btn btn-ghost w-full mt-2" disabled={loading}>
           Continue as Guest
         </button>
-
-        <p className="guest-note">Guest accounts are temporary but your data will be saved for 7 days</p>
       </div>
-
-      <style jsx>{`
-        .auth-modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .auth-modal {
-          background: white;
-          padding: 40px;
-          border-radius: 12px;
-          max-width: 450px;
-          width: 90%;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .auth-modal h2 {
-          margin: 0 0 10px 0;
-          text-align: center;
-          color: #333;
-        }
-
-        .subtitle {
-          text-align: center;
-          color: #666;
-          margin: 0 0 30px 0;
-          font-size: 0.95rem;
-        }
-
-        .auth-tabs {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 25px;
-        }
-
-        .auth-tab {
-          flex: 1;
-          padding: 12px;
-          background: #f5f5f5;
-          border: 2px solid transparent;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 16px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-
-        .auth-tab.active {
-          background: white;
-          border-color: #0070f3;
-          color: #0070f3;
-        }
-
-        .form-group {
-          margin-bottom: 20px;
-        }
-
-        .form-group label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 500;
-          color: #333;
-        }
-
-        .form-group input {
-          width: 100%;
-          padding: 12px;
-          border: 2px solid #e0e0e0;
-          border-radius: 8px;
-          font-size: 15px;
-          transition: border-color 0.2s;
-          box-sizing: border-box;
-        }
-
-        .form-group input:focus {
-          outline: none;
-          border-color: #0070f3;
-        }
-
-        .form-group input:disabled {
-          background: #f5f5f5;
-          cursor: not-allowed;
-        }
-
-        .error-message {
-          background: #fee;
-          color: #c00;
-          padding: 12px;
-          border-radius: 6px;
-          margin-bottom: 15px;
-          font-size: 0.9rem;
-        }
-
-        .btn-primary {
-          width: 100%;
-          padding: 14px;
-          background: #0070f3;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-          background: #0051cc;
-        }
-
-        .btn-primary:disabled {
-          background: #ccc;
-          cursor: not-allowed;
-        }
-
-        .divider {
-          text-align: center;
-          margin: 25px 0;
-          position: relative;
-        }
-
-        .divider::before {
-          content: "";
-          position: absolute;
-          top: 50%;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: #e0e0e0;
-        }
-
-        .divider span {
-          background: white;
-          padding: 0 15px;
-          color: #999;
-          font-size: 0.9rem;
-          position: relative;
-        }
-
-        .btn-guest {
-          width: 100%;
-          padding: 14px;
-          background: white;
-          color: #666;
-          border: 2px solid #e0e0e0;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-guest:hover:not(:disabled) {
-          border-color: #999;
-          color: #333;
-        }
-
-        .btn-guest:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .guest-note {
-          text-align: center;
-          margin: 15px 0 0 0;
-          font-size: 0.85rem;
-          color: #999;
-        }
-      `}</style>
     </div>
   );
 }
