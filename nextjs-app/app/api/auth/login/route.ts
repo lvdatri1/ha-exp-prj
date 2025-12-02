@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         email: user.email,
-        isGuest: user.is_guest === 1,
+        isGuest: user.isGuest,
       },
     });
 
