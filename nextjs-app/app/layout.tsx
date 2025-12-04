@@ -11,7 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="bg-base-100">
         {/* Main content area */}
-        <main className="p-6 mx-auto w-full">{children}</main>
+        <main className="p-6 mx-auto w-full max-w-[1200px]">{children}</main>
       </body>
     </html>
   );

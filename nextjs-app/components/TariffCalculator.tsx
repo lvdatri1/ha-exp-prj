@@ -6,7 +6,15 @@ import PlanSelector from "./PlanSelector";
 import ScheduleEditor from "./ScheduleEditor";
 import CostComparisonTable from "./CostComparisonTable";
 import SingleTariffTable from "./SingleTariffTable";
-import { ExternalPowerPlan, WeekSchedule, DaySchedule, PeakPeriod, TariffCalculatorProps, CompareType, CostData } from "../types/tariff";
+import {
+  ExternalPowerPlan,
+  WeekSchedule,
+  DaySchedule,
+  PeakPeriod,
+  TariffCalculatorProps,
+  CompareType,
+  CostData,
+} from "../types/tariff";
 import { DEFAULT_SCHEDULE, DAYS } from "../constants/tariff";
 import { calculateCostsForTariff } from "../utils/tariffCalculations";
 
@@ -488,7 +496,14 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
                   updateGasPeakPeriod={updateGasPeakPeriod}
                   copyScheduleToAll={copyScheduleToAll}
                   copyGasScheduleToAll={copyGasScheduleToAll}
-                  renderScheduleEditor={(props) => <ScheduleEditor {...props} />}
+                  renderScheduleEditor={(props: {
+                    schedule: WeekSchedule;
+                    updateScheduleFn: (day: string, updates: Partial<DaySchedule>) => void;
+                    addPeriodFn: (day: string) => void;
+                    removePeriodFn: (day: string, id: string) => void;
+                    updatePeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void;
+                    copyToAllFn: (day: string) => void;
+                  }) => <ScheduleEditor {...props} />}
                 />
               </div>
             </div>
@@ -536,7 +551,14 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
                   updateGasPeakPeriod={updateGasPeakPeriod2}
                   copyScheduleToAll={copyScheduleToAll2}
                   copyGasScheduleToAll={copyGasScheduleToAll2}
-                  renderScheduleEditor={(props) => <ScheduleEditor {...props} />}
+                  renderScheduleEditor={(props: {
+                    schedule: WeekSchedule;
+                    updateScheduleFn: (day: string, updates: Partial<DaySchedule>) => void;
+                    addPeriodFn: (day: string) => void;
+                    removePeriodFn: (day: string, id: string) => void;
+                    updatePeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void;
+                    copyToAllFn: (day: string) => void;
+                  }) => <ScheduleEditor {...props} />}
                 />
               </div>
             </div>
@@ -582,7 +604,14 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
               updateGasPeakPeriod={updateGasPeakPeriod}
               copyScheduleToAll={copyScheduleToAll}
               copyGasScheduleToAll={copyGasScheduleToAll}
-              renderScheduleEditor={(props) => <ScheduleEditor {...props} />}
+              renderScheduleEditor={(props: {
+                schedule: WeekSchedule;
+                updateScheduleFn: (day: string, updates: Partial<DaySchedule>) => void;
+                addPeriodFn: (day: string) => void;
+                removePeriodFn: (day: string, id: string) => void;
+                updatePeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void;
+                copyToAllFn: (day: string) => void;
+              }) => <ScheduleEditor {...props} />}
             />
           </div>
         )}

@@ -135,7 +135,7 @@ export default function UsersAdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 admin-layout">
-      <div className="w-full max-w-none mx-auto px-4 lg:px-6 py-4 lg:py-6">
+      <div className="w-full max-w-[1200px] mx-auto px-4 lg:px-6 py-4 lg:py-6">
         {/* Header Card */}
         <div className="card bg-gradient-to-r from-primary to-secondary text-white shadow-xl mb-6">
           <div className="card-body">

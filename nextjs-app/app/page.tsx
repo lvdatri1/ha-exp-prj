@@ -98,7 +98,7 @@ export default function Home() {
 
   return (
     <div className="bg-base-200 p-0 lg:p-6">
-      <div className="w-full max-w-none mx-auto">
+      <div className="w-full max-w-[1200px] mx-auto">
         <div className="card w-full bg-base-100 shadow-xl">
           {/* Header */}
           <div className="card-body">
