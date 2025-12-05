@@ -1,0 +1,110 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: ⚡
+          - heading "Energy Dashboard" [level=1] [ref=e9]
+          - paragraph [ref=e10]: Real-time energy consumption analytics and forecasting
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - img [ref=e14]
+            - text: Click a month bar to see daily usage breakdown
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - heading "Tariff Calculator (NZ)" [level=3] [ref=e19]
+              - button "➕ Compare Tariffs" [ref=e20] [cursor=pointer]
+            - generic [ref=e21]:
+              - generic [ref=e22]:
+                - text: "Select Power Plan:"
+                - combobox [ref=e23]:
+                  - option "-- Choose a plan --" [selected]
+                  - option "Contact Energy - Contact Energy Basic"
+                  - option "Electric Kiwi - Electric Kiwi MoveMaster"
+                  - option "Genesis Energy - Genesis Energy Classic"
+                  - option "Mercury - Mercury Anytime"
+              - generic [ref=e24]:
+                - heading "Tariff 1" [level=4] [ref=e25]
+                - generic [ref=e26]:
+                  - heading "⚡ Electricity" [level=5] [ref=e27]
+                  - generic [ref=e28]:
+                    - generic [ref=e29] [cursor=pointer]:
+                      - radio "Peak/Off-Peak Pricing" [checked] [ref=e30]
+                      - generic [ref=e31]: Peak/Off-Peak Pricing
+                    - generic [ref=e32] [cursor=pointer]:
+                      - radio "Flat Rate" [ref=e33]
+                      - generic [ref=e34]: Flat Rate
+                  - generic [ref=e35]:
+                    - generic [ref=e36]:
+                      - generic [ref=e37]: Peak Rate (NZD/kWh)
+                      - spinbutton [ref=e38]: "0.38"
+                      - text: During peak hours
+                    - generic [ref=e39]:
+                      - generic [ref=e40]: Off-Peak Rate (NZD/kWh)
+                      - spinbutton [ref=e41]: "0.25"
+                      - text: During off-peak hours
+                    - generic [ref=e42]:
+                      - generic [ref=e43]: Daily Fixed Charge (NZD/day)
+                      - spinbutton [ref=e44]: "0.3"
+                      - text: Daily connection charge
+                  - button "▶ Peak/Off-Peak Schedule" [ref=e46] [cursor=pointer]
+                - generic [ref=e47]:
+                  - heading "🔥 Gas" [level=5] [ref=e48]
+                  - generic [ref=e49]:
+                    - generic [ref=e50] [cursor=pointer]:
+                      - radio "Peak/Off-Peak Pricing" [ref=e51]
+                      - generic [ref=e52]: Peak/Off-Peak Pricing
+                    - generic [ref=e53] [cursor=pointer]:
+                      - radio "Flat Rate" [checked] [ref=e54]
+                      - generic [ref=e55]: Flat Rate
+                  - generic [ref=e56]:
+                    - generic [ref=e57]:
+                      - generic [ref=e58]: Flat Rate (NZD/kWh)
+                      - spinbutton [ref=e59]: "0.15"
+                      - text: Same rate for all hours
+                    - generic [ref=e60]:
+                      - generic [ref=e61]: Daily Fixed Charge (NZD/day)
+                      - spinbutton [ref=e62]: "0.5"
+                      - text: Daily connection charge
+            - button "Save Settings" [ref=e64] [cursor=pointer]
+            - paragraph [ref=e65]: "Defaults: Weekdays have peak periods 7-11am & 5-9pm, weekends are all off-peak."
+          - generic [ref=e67]:
+            - heading "Monthly Energy Consumption" [level=3] [ref=e68]
+            - img [ref=e69]
+          - generic [ref=e71]:
+            - heading "Hourly Distribution" [level=3] [ref=e72]
+            - img [ref=e73]
+          - generic [ref=e75]:
+            - heading "Day of Week Pattern" [level=3] [ref=e76]
+            - img [ref=e77]
+          - generic [ref=e79]:
+            - heading "24-Hour Usage by Date" [level=3] [ref=e80]
+            - generic [ref=e81]:
+              - textbox [ref=e82]
+              - button "Clear" [ref=e83] [cursor=pointer]
+      - generic [ref=e86]:
+        - generic [ref=e87]:
+          - heading "Sign in" [level=2] [ref=e88]
+          - paragraph [ref=e89]: Welcome to our app.
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - generic [ref=e93] [cursor=pointer]: Username*
+            - textbox "Enter your username" [ref=e94]
+          - generic [ref=e95]:
+            - generic [ref=e97] [cursor=pointer]: Password*
+            - textbox "************" [ref=e98]
+          - generic [ref=e99]:
+            - generic [ref=e100] [cursor=pointer]:
+              - checkbox "Remember Me" [ref=e101]
+              - generic [ref=e102]: Remember Me
+            - generic [ref=e103] [cursor=pointer]: Forgot Password?
+          - button "Sign in" [ref=e104] [cursor=pointer]
+        - generic [ref=e105]:
+          - text: New on our platform?
+          - button "Create an account" [ref=e106] [cursor=pointer]
+        - button "Continue as Guest" [ref=e107] [cursor=pointer]
+  - alert [ref=e108]
+```

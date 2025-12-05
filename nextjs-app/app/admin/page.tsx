@@ -99,7 +99,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-base-200 admin-layout">
-      <div className="w-full max-w-[1200px] mx-auto px-4 lg:px-6 py-4 lg:py-6">
+      <div className="w-full px-4 lg:px-6 py-4 lg:py-6">
         {/* Header Card */}
         <div className="card bg-base-100 shadow-lg border-b-4 border-primary mb-6">
           <div className="card-body">

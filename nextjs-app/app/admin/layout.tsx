@@ -117,7 +117,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
         {/* Page body */}
-        <div className="flex-1 p-4 md:p-6 lg:p-8 container mx-auto w-full max-w-[1200px]">{children}</div>
+        <div className="flex-1 p-4 md:p-6 lg:p-8 w-full">{children}</div>
       </div>
       <div className="drawer-side z-50">
         <label
