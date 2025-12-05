@@ -70,62 +70,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div data-theme="energyadmin" className="drawer lg:drawer-open bg-base-100 min-h-screen">
-      <input
-        id="admin-drawer"
-        type="checkbox"
-        className="drawer-toggle"
-        checked={sidebarOpen}
-        onChange={() => setSidebarOpen(!sidebarOpen)}
-      />
-      <div className="drawer-content flex flex-col">
-        {/* Top Navbar */}
-        <div className="navbar bg-base-100 border-b shadow-sm px-4">
-          <div className="flex-none lg:hidden">
-            <label
-              htmlFor="admin-drawer"
-              className="btn btn-ghost btn-square"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
-            </label>
-          </div>
-          <div className="flex-1">
-            <Link href="/admin" className="font-bold text-primary text-lg">
-              Energy Admin
-            </Link>
-          </div>
-          <div className="flex-none hidden md:flex items-center gap-3">
-            <div className="avatar placeholder">
-              <div className="bg-primary text-white rounded-full w-10">
-                <span className="text-sm font-semibold">{user?.username?.charAt(0).toUpperCase() || "A"}</span>
-              </div>
+    <div data-theme="energyadmin" className="min-h-screen bg-base-100">
+      {/* Mobile drawer */}
+      <input id="admin-drawer-mobile" type="checkbox" className="drawer-toggle" checked={sidebarOpen} onChange={() => setSidebarOpen(!sidebarOpen)} />
+      
+      {/* Mobile navbar */}
+      <div className="drawer-content lg:hidden sticky top-0 z-40 bg-base-100 border-b shadow-sm">
+        <label htmlFor="admin-drawer-mobile" className="btn btn-ghost btn-square drawer-button">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </label>
+        <div className="flex-1 px-4 py-3">
+          <Link href="/admin" className="font-bold text-primary text-lg">
+            Energy Admin
+          </Link>
+        </div>
+        <div className="flex-none hidden md:flex items-center gap-3 pr-4">
+          <div className="avatar placeholder">
+            <div className="bg-primary text-white rounded-full w-10">
+              <span className="text-sm font-semibold">{user?.username?.charAt(0).toUpperCase() || "A"}</span>
             </div>
-            <div className="text-sm">
-              <div className="font-medium">{user?.username || "Admin"}</div>
-              <div className="text-xs opacity-70">{user?.email || "Administrator"}</div>
-            </div>
+          </div>
+          <div className="text-sm">
+            <div className="font-medium">{user?.username || "Admin"}</div>
+            <div className="text-xs opacity-70">{user?.email || "Administrator"}</div>
           </div>
         </div>
-        {/* Page body */}
-        <div className="flex-1 p-4 md:p-6 lg:p-8 w-full">{children}</div>
       </div>
-      <div className="drawer-side z-50">
-        <label
-          htmlFor="admin-drawer"
-          aria-label="close sidebar"
-          className="drawer-overlay"
-          onClick={() => setSidebarOpen(false)}
-        ></label>
+
+      {/* Mobile drawer sidebar */}
+      <div className="drawer-side z-50 lg:hidden">
+        <label htmlFor="admin-drawer-mobile" aria-label="close sidebar" className="drawer-overlay"></label>
         <aside className="w-72 bg-base-200 flex flex-col border-r">
           <div className="px-6 py-4 border-b bg-base-100">
             <Link href="/admin" className="flex items-center gap-3">
@@ -175,6 +151,64 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           </div>
         </aside>
+      </div>
+
+      {/* Desktop layout: flex with sidebar + content */}
+      <div className="flex">
+        {/* Desktop sidebar - always visible */}
+        <aside className="hidden lg:flex flex-col w-72 bg-base-200 border-r fixed h-screen">
+          <div className="px-6 py-4 border-b bg-base-100">
+            <Link href="/admin" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-primary-content" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="font-bold text-lg">Energy Admin</span>
+            </Link>
+          </div>
+          <nav className="menu p-4 flex-1 overflow-y-auto">
+            <ul className="space-y-1">
+              {navigation.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                        isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"
+                      }`}
+                    >
+                      {item.icon}
+                      <span className="font-medium text-sm">{item.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+          <div className="p-4 border-t bg-base-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="avatar placeholder">
+                <div className="bg-primary text-white rounded-full w-10">
+                  <span className="text-sm font-semibold">{user?.username?.charAt(0).toUpperCase() || "A"}</span>
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{user?.username || "Admin"}</p>
+                <p className="text-xs opacity-70 truncate">{user?.email || "Administrator"}</p>
+              </div>
+            </div>
+            <Link href="/" className="btn btn-outline btn-sm w-full">
+              Back to App
+            </Link>
+          </div>
+        </aside>
+
+        {/* Main content area - takes remaining space on desktop */}
+        <main className="w-full lg:ml-72 flex-1">
+          {children}
+        </main>
       </div>
     </div>
   );
