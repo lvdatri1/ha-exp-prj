@@ -167,139 +167,146 @@ export default function PowerPlansAdminPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Power Plans Management
-          </h1>
-          <p className="text-sm opacity-70 mt-1">Create and manage tariff plans for electricity and gas</p>
-        </div>
-        <div className="stats shadow bg-base-100 border border-base-300">
-          <div className="stat py-3 px-4">
-            <div className="stat-title text-xs">Total Plans</div>
-            <div className="stat-value text-2xl text-primary">{plans.length}</div>
-          </div>
-          <div className="stat py-3 px-4">
-            <div className="stat-title text-xs">Active</div>
-            <div className="stat-value text-2xl text-success">{plans.filter((p) => p.active === 1).length}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Error Alert */}
-      {error && (
-        <div className="alert alert-error shadow-lg">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
           <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current flex-shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>{error}</span>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Power Plans Management
+            </h1>
+            <p className="text-sm opacity-70 mt-1">Create and manage tariff plans for electricity and gas</p>
           </div>
-          <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>
-            ✕
-          </button>
+          <div className="stats shadow bg-base-100 border border-base-300">
+            <div className="stat py-3 px-4">
+              <div className="stat-title text-xs">Total Plans</div>
+              <div className="stat-value text-2xl text-primary">{plans.length}</div>
+            </div>
+            <div className="stat py-3 px-4">
+              <div className="stat-title text-xs">Active</div>
+              <div className="stat-value text-2xl text-success">{plans.filter((p) => p.active === 1).length}</div>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Create New Plan Card */}
-      <div className="card bg-base-100 shadow-xl border border-base-300">
-        <div className="card-body">
-          <h2 className="card-title text-xl flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              className="w-6 h-6 stroke-current text-primary"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Create New Power Plan
-          </h2>
-          <div className="divider my-2"></div>
-          <PowerPlanForm
-            form={form}
-            setForm={setForm}
-            schedule={createSchedule.schedule}
-            gasSchedule={createSchedule.gasSchedule}
-            showSchedule={createSchedule.showSchedule}
-            showGasSchedule={createSchedule.showGasSchedule}
-            setShowSchedule={createSchedule.setShowSchedule}
-            setShowGasSchedule={createSchedule.setShowGasSchedule}
-            updateDaySchedule={createSchedule.updateDaySchedule}
-            updateGasDaySchedule={createSchedule.updateGasDaySchedule}
-            addPeakPeriod={createSchedule.addPeakPeriod}
-            addGasPeakPeriod={createSchedule.addGasPeakPeriod}
-            removePeakPeriod={createSchedule.removePeakPeriod}
-            removeGasPeakPeriod={createSchedule.removeGasPeakPeriod}
-            updatePeakPeriod={createSchedule.updatePeakPeriod}
-            updateGasPeakPeriod={createSchedule.updateGasPeakPeriod}
-            copyScheduleToAll={createSchedule.copyScheduleToAll}
-            copyGasScheduleToAll={createSchedule.copyGasScheduleToAll}
-            onSubmit={handleCreatePlan}
-            submitLabel="Create Plan"
-          />
+        {/* Error Alert */}
+        {error && (
+          <div className="alert alert-error shadow-lg">
+            <div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current flex-shrink-0 h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>{error}</span>
+            </div>
+            <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Create New Plan Card */}
+        <div className="card bg-base-100 shadow-xl border border-base-300">
+          <div className="card-body">
+            <h2 className="card-title text-xl flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                className="w-6 h-6 stroke-current text-primary"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                ></path>
+              </svg>
+              Create New Power Plan
+            </h2>
+            <div className="divider my-2"></div>
+            <PowerPlanForm
+              form={form}
+              setForm={setForm}
+              schedule={createSchedule.schedule}
+              gasSchedule={createSchedule.gasSchedule}
+              showSchedule={createSchedule.showSchedule}
+              showGasSchedule={createSchedule.showGasSchedule}
+              setShowSchedule={createSchedule.setShowSchedule}
+              setShowGasSchedule={createSchedule.setShowGasSchedule}
+              updateDaySchedule={createSchedule.updateDaySchedule}
+              updateGasDaySchedule={createSchedule.updateGasDaySchedule}
+              addPeakPeriod={createSchedule.addPeakPeriod}
+              addGasPeakPeriod={createSchedule.addGasPeakPeriod}
+              removePeakPeriod={createSchedule.removePeakPeriod}
+              removeGasPeakPeriod={createSchedule.removeGasPeakPeriod}
+              updatePeakPeriod={createSchedule.updatePeakPeriod}
+              updateGasPeakPeriod={createSchedule.updateGasPeakPeriod}
+              copyScheduleToAll={createSchedule.copyScheduleToAll}
+              copyGasScheduleToAll={createSchedule.copyGasScheduleToAll}
+              onSubmit={handleCreatePlan}
+              submitLabel="Create Plan"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Plans List Card */}
-      <div className="card bg-base-100 shadow-xl border border-base-300">
-        <div className="card-body">
-          <h2 className="card-title text-xl flex items-center gap-2 mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              className="w-6 h-6 stroke-current text-primary"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-              ></path>
-            </svg>
-            All Power Plans
-          </h2>
-          <PowerPlansTable
-            plans={plans}
-            editingId={editingId}
-            editForm={editForm}
-            editSchedule={editSchedule.schedule}
-            editGasSchedule={editSchedule.gasSchedule}
-            showEditSchedule={editSchedule.showSchedule}
-            showEditGasSchedule={editSchedule.showGasSchedule}
-            setEditingId={setEditingId}
-            setEditForm={setEditForm}
-            setShowEditSchedule={editSchedule.setShowSchedule}
-            setShowEditGasSchedule={editSchedule.setShowGasSchedule}
-            updateEditDaySchedule={editSchedule.updateDaySchedule}
-            updateEditGasDaySchedule={editSchedule.updateGasDaySchedule}
-            addEditPeakPeriod={editSchedule.addPeakPeriod}
-            addEditGasPeakPeriod={editSchedule.addGasPeakPeriod}
-            removeEditPeakPeriod={editSchedule.removePeakPeriod}
-            removeEditGasPeakPeriod={editSchedule.removeGasPeakPeriod}
-            updateEditPeakPeriod={editSchedule.updatePeakPeriod}
-            updateEditGasPeakPeriod={editSchedule.updateGasPeakPeriod}
-            copyEditScheduleToAll={editSchedule.copyScheduleToAll}
-            copyEditGasScheduleToAll={editSchedule.copyGasScheduleToAll}
-            onUpdatePlan={updatePlan}
-            onDeletePlan={deletePlan}
-            onSaveEdit={handleSaveEdit}
-            onCancelEdit={handleCancelEdit}
-            onOpenEdit={handleOpenEdit}
-          />
+        {/* Plans List Card */}
+        <div className="card bg-base-100 shadow-xl border border-base-300">
+          <div className="card-body">
+            <h2 className="card-title text-xl flex items-center gap-2 mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                className="w-6 h-6 stroke-current text-primary"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                ></path>
+              </svg>
+              All Power Plans
+            </h2>
+            <PowerPlansTable
+              plans={plans}
+              editingId={editingId}
+              editForm={editForm}
+              editSchedule={editSchedule.schedule}
+              editGasSchedule={editSchedule.gasSchedule}
+              showEditSchedule={editSchedule.showSchedule}
+              showEditGasSchedule={editSchedule.showGasSchedule}
+              setEditingId={setEditingId}
+              setEditForm={setEditForm}
+              setShowEditSchedule={editSchedule.setShowSchedule}
+              setShowEditGasSchedule={editSchedule.setShowGasSchedule}
+              updateEditDaySchedule={editSchedule.updateDaySchedule}
+              updateEditGasDaySchedule={editSchedule.updateGasDaySchedule}
+              addEditPeakPeriod={editSchedule.addPeakPeriod}
+              addEditGasPeakPeriod={editSchedule.addGasPeakPeriod}
+              removeEditPeakPeriod={editSchedule.removePeakPeriod}
+              removeEditGasPeakPeriod={editSchedule.removeGasPeakPeriod}
+              updateEditPeakPeriod={editSchedule.updatePeakPeriod}
+              updateEditGasPeakPeriod={editSchedule.updateGasPeakPeriod}
+              copyEditScheduleToAll={editSchedule.copyScheduleToAll}
+              copyEditGasScheduleToAll={editSchedule.copyGasScheduleToAll}
+              onUpdatePlan={updatePlan}
+              onDeletePlan={deletePlan}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={handleCancelEdit}
+              onOpenEdit={handleOpenEdit}
+            />
+          </div>
         </div>
       </div>
     </div>

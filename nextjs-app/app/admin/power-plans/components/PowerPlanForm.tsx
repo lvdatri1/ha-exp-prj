@@ -287,12 +287,12 @@ export default function PowerPlanForm({
         </>
       )}
 
-      <div className="flex gap-2 mt-6">
-        <button className="btn btn-primary" onClick={onSubmit}>
+      <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200">
+        <button className="btn btn-primary flex-shrink-0" onClick={onSubmit}>
           {submitLabel}
         </button>
         {onCancel && (
-          <button className="btn btn-ghost" onClick={onCancel}>
+          <button className="btn btn-ghost flex-shrink-0" onClick={onCancel}>
             Cancel
           </button>
         )}

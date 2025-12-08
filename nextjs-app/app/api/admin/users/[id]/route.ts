@@ -1,29 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/db";
+import { getUserById, prisma } from "@/lib/db";
 
-async function requireAdmin() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("session");
+async function requireAdmin(request: NextRequest) {
+  const userId = request.cookies.get("session_user_id")?.value;
+  if (!userId) return null;
 
-  if (!sessionCookie) {
-    return null;
-  }
-
-  const sessionData = JSON.parse(sessionCookie.value);
-  const user = await prisma.user.findUnique({
-    where: { id: sessionData.userId },
-  });
-
-  if (!user || !user.isAdmin) {
-    return null;
-  }
+  const user = await getUserById(parseInt(userId));
+  if (!user || !user.is_admin) return null;
 
   return user;
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const id = parseInt(params.id);
@@ -52,7 +41,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       data: { isAdmin: isAdminValue },
     });
 
-    return NextResponse.json({ user: updated });
+    // Map to legacy format
+    const mappedUser = {
+      id: updated.id,
+      username: updated.username,
+      email: updated.email,
+      is_guest: updated.isGuest ? 1 : 0,
+      is_admin: updated.isAdmin ? 1 : 0,
+      created_at: updated.createdAt.toISOString(),
+    };
+
+    return NextResponse.json({ user: mappedUser });
   } catch (err) {
     console.error("Update user admin error:", err);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
@@ -60,7 +59,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const id = parseInt(params.id);

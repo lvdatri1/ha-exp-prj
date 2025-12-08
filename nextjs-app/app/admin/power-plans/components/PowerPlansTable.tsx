@@ -208,8 +208,8 @@ export default function PowerPlansTable({
               </tr>
               {editingId === p.id && editForm && (
                 <tr className="bg-blue-50 border-b border-stroke">
-                  <td colSpan={6} className="py-6 px-4">
-                    <div className="space-y-4 min-w-full">
+                  <td colSpan={6} className="py-6 px-4 max-w-none">
+                    <div className="space-y-4 min-w-full max-w-full">
                       <div className="flex items-center justify-between mb-4 sticky top-0 bg-blue-50 pb-2 z-10">
                         <h4 className="font-bold text-lg">Edit Power Plan</h4>
                         <button className="btn btn-sm btn-circle btn-ghost flex-shrink-0" onClick={onCancelEdit}>
