@@ -182,14 +182,14 @@ const TariffSettings: React.FC<TariffSettingsProps> = (props) => {
               </button>
 
               {props.showAdvanced &&
-                props.renderScheduleEditor(
-                  props.schedule,
-                  props.updateDaySchedule,
-                  props.addPeakPeriod,
-                  props.removePeakPeriod,
-                  props.updatePeakPeriod,
-                  props.copyScheduleToAll
-                )}
+                props.renderScheduleEditor({
+                  schedule: props.schedule,
+                  updateScheduleFn: props.updateDaySchedule,
+                  addPeriodFn: props.addPeakPeriod,
+                  removePeriodFn: props.removePeakPeriod,
+                  updatePeriodFn: props.updatePeakPeriod,
+                  copyToAllFn: props.copyScheduleToAll,
+                })}
             </div>
           </>
         )}
@@ -330,14 +330,14 @@ const TariffSettings: React.FC<TariffSettingsProps> = (props) => {
                 </button>
 
                 {props.showGasAdvanced &&
-                  props.renderScheduleEditor(
-                    props.gasSchedule,
-                    props.updateGasDaySchedule,
-                    props.addGasPeakPeriod,
-                    props.removeGasPeakPeriod,
-                    props.updateGasPeakPeriod,
-                    props.copyGasScheduleToAll
-                  )}
+                  props.renderScheduleEditor({
+                    schedule: props.gasSchedule,
+                    updateScheduleFn: props.updateGasDaySchedule,
+                    addPeriodFn: props.addGasPeakPeriod,
+                    removePeriodFn: props.removeGasPeakPeriod,
+                    updatePeriodFn: props.updateGasPeakPeriod,
+                    copyToAllFn: props.copyGasScheduleToAll,
+                  })}
               </div>
             </>
           )}

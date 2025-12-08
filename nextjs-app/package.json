@@ -2,6 +2,9 @@
   "name": "ha-energy-dashboard",
   "version": "1.0.0",
   "private": true,
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",

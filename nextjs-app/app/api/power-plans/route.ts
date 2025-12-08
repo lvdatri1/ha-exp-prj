@@ -10,19 +10,24 @@ async function requireAdmin(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const activeParam = searchParams.get("active");
-  const activeOnly = activeParam === "1" || activeParam === "true";
-  const plans = await listPowerPlans(activeOnly);
-  // Normalize booleans to numeric flags for backward-compatible tests
-  const normalized = plans.map((p: any) => ({
-    ...p,
-    active: p.active ? 1 : 0,
-    is_flat_rate: p.is_flat_rate ? 1 : 0,
-    has_gas: p.has_gas ? 1 : 0,
-    gas_is_flat_rate: p.gas_is_flat_rate ? 1 : 0,
-  }));
-  return NextResponse.json({ plans: normalized });
+  try {
+    const { searchParams } = new URL(request.url);
+    const activeParam = searchParams.get("active");
+    const activeOnly = activeParam === "1" || activeParam === "true";
+    const plans = await listPowerPlans(activeOnly);
+    // Normalize booleans to numeric flags for backward-compatible tests
+    const normalized = plans.map((p: any) => ({
+      ...p,
+      active: p.active ? 1 : 0,
+      is_flat_rate: p.is_flat_rate ? 1 : 0,
+      has_gas: p.has_gas ? 1 : 0,
+      gas_is_flat_rate: p.gas_is_flat_rate ? 1 : 0,
+    }));
+    return NextResponse.json({ plans: normalized });
+  } catch (err) {
+    console.error("Get plans error:", err);
+    return NextResponse.json({ error: "Failed to fetch plans" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
