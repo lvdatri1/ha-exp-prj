@@ -14,6 +14,9 @@ export interface ExternalPowerPlan {
   gas_peak_rate?: number | null;
   gas_off_peak_rate?: number | null;
   gas_daily_charge?: number | null;
+  // Flexible rate structures (JSON)
+  electricity_rates?: string | null;
+  gas_rates?: string | null;
 }
 
 export interface TariffCalculatorProps {

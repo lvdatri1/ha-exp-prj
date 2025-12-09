@@ -73,14 +73,21 @@ model PowerPlan {
   active         Boolean  @default(true)
   isFlatRate     Boolean  @default(true) @map("is_flat_rate")
   flatRate       Float?   @map("flat_rate")
+  // Legacy fields kept for backward compatibility
   peakRate       Float?   @map("peak_rate")
   offPeakRate    Float?   @map("off_peak_rate")
+  // New flexible rate structure: JSON storing { rateName: rate, ... }
+  // e.g., { "free": 0, "night": 0.15, "day": 0.25, "peak": 0.35 }
+  electricityRates String? @map("electricity_rates") // JSON
   dailyCharge    Float?   @map("daily_charge")
   hasGas         Boolean  @default(false) @map("has_gas")
   gasIsFlatRate  Boolean  @default(true) @map("gas_is_flat_rate")
   gasFlatRate    Float?   @map("gas_flat_rate")
+  // Legacy gas fields
   gasPeakRate    Float?   @map("gas_peak_rate")
   gasOffPeakRate Float?   @map("gas_off_peak_rate")
+  // New flexible gas rate structure
+  gasRates       String?  @map("gas_rates") // JSON
   gasDailyCharge Float?   @map("gas_daily_charge")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")

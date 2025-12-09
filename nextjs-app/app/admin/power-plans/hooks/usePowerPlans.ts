@@ -15,14 +15,20 @@ export interface PowerPlan {
   active: number;
   is_flat_rate: number;
   flat_rate?: number | null;
+  // Legacy fields (backward compatibility)
   peak_rate?: number | null;
   off_peak_rate?: number | null;
+  // New flexible rate structure
+  electricity_rates?: string | null; // JSON: { "free": 0, "night": 0.15, "day": 0.25, "peak": 0.35 }
   daily_charge?: number | null;
   has_gas: number;
   gas_is_flat_rate: number;
   gas_flat_rate?: number | null;
+  // Legacy gas fields
   gas_peak_rate?: number | null;
   gas_off_peak_rate?: number | null;
+  // New flexible gas rate structure
+  gas_rates?: string | null; // JSON
   gas_daily_charge?: number | null;
 }
 
@@ -51,19 +57,13 @@ export function usePowerPlans() {
 
   const canAdmin = useMemo(() => user && user.isAdmin === true, [user]);
 
-  const createPlan = async (plan: PowerPlan, schedule?: any, gasSchedule?: any) => {
+  const createPlan = async (plan: PowerPlan) => {
     setError(null);
     try {
-      const payload = {
-        ...plan,
-        schedule: plan.is_flat_rate === 0 ? schedule : undefined,
-        gasSchedule: plan.has_gas === 1 && plan.gas_is_flat_rate === 0 ? gasSchedule : undefined,
-      };
-
       const res = await fetch("/api/power-plans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(plan),
       });
       if (!res.ok) {
         const j = await res.json();

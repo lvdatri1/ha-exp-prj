@@ -48,10 +48,12 @@ export interface PowerPlan {
   flat_rate: number | null;
   peak_rate: number | null;
   off_peak_rate: number | null;
+  electricity_rates: string | null;
   daily_charge: number | null;
   has_gas: boolean;
   gas_is_flat_rate: boolean;
   gas_flat_rate: number | null;
+  gas_rates: string | null;
   gas_peak_rate: number | null;
   gas_off_peak_rate: number | null;
   gas_daily_charge: number | null;
@@ -295,25 +297,27 @@ export async function getPowerPlanById(id: number): Promise<PowerPlan | null> {
   return plan ? mapPowerPlanToLegacyFormat(plan) : null;
 }
 
-export async function createPowerPlan(plan: Omit<PowerPlan, "id" | "created_at" | "updated_at">): Promise<PowerPlan> {
-  const created = await prisma.powerPlan.create({
-    data: {
-      retailer: plan.retailer,
-      name: plan.name,
-      active: plan.active ?? true,
-      isFlatRate: plan.is_flat_rate ?? true,
-      flatRate: plan.flat_rate ?? null,
-      peakRate: plan.peak_rate ?? null,
-      offPeakRate: plan.off_peak_rate ?? null,
-      dailyCharge: plan.daily_charge ?? null,
-      hasGas: plan.has_gas ?? false,
-      gasIsFlatRate: plan.gas_is_flat_rate ?? true,
-      gasFlatRate: plan.gas_flat_rate ?? null,
-      gasPeakRate: plan.gas_peak_rate ?? null,
-      gasOffPeakRate: plan.gas_off_peak_rate ?? null,
-      gasDailyCharge: plan.gas_daily_charge ?? null,
-    },
-  });
+export async function createPowerPlan(plan: any): Promise<PowerPlan> {
+  const data: any = {
+    retailer: plan.retailer,
+    name: plan.name,
+    active: plan.active ?? true,
+    isFlatRate: plan.is_flat_rate ?? true,
+    flatRate: plan.flat_rate ?? null,
+    electricityRates: (plan as any).electricity_rates ?? null,
+    peakRate: plan.peak_rate ?? null,
+    offPeakRate: plan.off_peak_rate ?? null,
+    dailyCharge: plan.daily_charge ?? null,
+    hasGas: plan.has_gas ?? false,
+    gasIsFlatRate: plan.gas_is_flat_rate ?? true,
+    gasFlatRate: plan.gas_flat_rate ?? null,
+    gasRates: (plan as any).gas_rates ?? null,
+    gasPeakRate: plan.gas_peak_rate ?? null,
+    gasOffPeakRate: plan.gas_off_peak_rate ?? null,
+    gasDailyCharge: plan.gas_daily_charge ?? null,
+  };
+
+  const created = await prisma.powerPlan.create({ data });
   return mapPowerPlanToLegacyFormat(created);
 }
 
@@ -329,12 +333,14 @@ export async function updatePowerPlan(
   if ("active" in fields) data.active = fields.active;
   if ("is_flat_rate" in fields) data.isFlatRate = fields.is_flat_rate;
   if ("flat_rate" in fields) data.flatRate = fields.flat_rate;
+  if ("electricity_rates" in fields) data.electricityRates = (fields as any).electricity_rates;
   if ("peak_rate" in fields) data.peakRate = fields.peak_rate;
   if ("off_peak_rate" in fields) data.offPeakRate = fields.off_peak_rate;
   if ("daily_charge" in fields) data.dailyCharge = fields.daily_charge;
   if ("has_gas" in fields) data.hasGas = fields.has_gas;
   if ("gas_is_flat_rate" in fields) data.gasIsFlatRate = fields.gas_is_flat_rate;
   if ("gas_flat_rate" in fields) data.gasFlatRate = fields.gas_flat_rate;
+  if ("gas_rates" in fields) data.gasRates = (fields as any).gas_rates;
   if ("gas_peak_rate" in fields) data.gasPeakRate = fields.gas_peak_rate;
   if ("gas_off_peak_rate" in fields) data.gasOffPeakRate = fields.gas_off_peak_rate;
   if ("gas_daily_charge" in fields) data.gasDailyCharge = fields.gas_daily_charge;
@@ -449,12 +455,14 @@ function mapPowerPlanToLegacyFormat(plan: any): PowerPlan {
     active: plan.active,
     is_flat_rate: plan.isFlatRate,
     flat_rate: plan.flatRate,
+    electricity_rates: plan.electricityRates ?? null,
     peak_rate: plan.peakRate,
     off_peak_rate: plan.offPeakRate,
     daily_charge: plan.dailyCharge,
     has_gas: plan.hasGas,
     gas_is_flat_rate: plan.gasIsFlatRate,
     gas_flat_rate: plan.gasFlatRate,
+    gas_rates: plan.gasRates ?? null,
     gas_peak_rate: plan.gasPeakRate,
     gas_off_peak_rate: plan.gasOffPeakRate,
     gas_daily_charge: plan.gasDailyCharge,

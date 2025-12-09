@@ -1,64 +1,29 @@
 import React from "react";
 import { PowerPlan } from "../hooks/usePowerPlans";
 import PowerPlanForm from "./PowerPlanForm";
-import { WeekSchedule } from "@/types/tariff";
 
 interface PowerPlansTableProps {
   plans: PowerPlan[];
   editingId: number | null;
   editForm: PowerPlan | null;
-  editSchedule: WeekSchedule;
-  editGasSchedule: WeekSchedule;
-  showEditSchedule: boolean;
-  showEditGasSchedule: boolean;
-  setEditingId: (id: number | null) => void;
   setEditForm: (form: PowerPlan | null) => void;
-  setShowEditSchedule: (show: boolean) => void;
-  setShowEditGasSchedule: (show: boolean) => void;
-  updateEditDaySchedule: (day: string, updates: any) => void;
-  updateEditGasDaySchedule: (day: string, updates: any) => void;
-  addEditPeakPeriod: (day: string) => void;
-  addEditGasPeakPeriod: (day: string) => void;
-  removeEditPeakPeriod: (day: string, id: string) => void;
-  removeEditGasPeakPeriod: (day: string, id: string) => void;
-  updateEditPeakPeriod: (day: string, id: string, field: "start" | "end", value: string) => void;
-  updateEditGasPeakPeriod: (day: string, id: string, field: "start" | "end", value: string) => void;
-  copyEditScheduleToAll: (day: string) => void;
-  copyEditGasScheduleToAll: (day: string) => void;
-  onUpdatePlan: (id: number, patch: Partial<PowerPlan>) => Promise<void>;
-  onDeletePlan: (id: number) => void;
-  onSaveEdit: () => void;
+  onToggleActive: (id: number, active: boolean) => Promise<void>;
+  onEdit: (plan: PowerPlan) => void;
   onCancelEdit: () => void;
-  onOpenEdit: (plan: PowerPlan) => void;
+  onSaveEdit: () => void;
+  onDelete: (id: number) => void;
 }
 
 export default function PowerPlansTable({
   plans,
   editingId,
   editForm,
-  editSchedule,
-  editGasSchedule,
-  showEditSchedule,
-  showEditGasSchedule,
-  setEditingId,
   setEditForm,
-  setShowEditSchedule,
-  setShowEditGasSchedule,
-  updateEditDaySchedule,
-  updateEditGasDaySchedule,
-  addEditPeakPeriod,
-  addEditGasPeakPeriod,
-  removeEditPeakPeriod,
-  removeEditGasPeakPeriod,
-  updateEditPeakPeriod,
-  updateEditGasPeakPeriod,
-  copyEditScheduleToAll,
-  copyEditGasScheduleToAll,
-  onUpdatePlan,
-  onDeletePlan,
-  onSaveEdit,
+  onToggleActive,
+  onEdit,
   onCancelEdit,
-  onOpenEdit,
+  onSaveEdit,
+  onDelete,
 }: PowerPlansTableProps) {
   return (
     <div className="overflow-x-auto">
@@ -94,7 +59,7 @@ export default function PowerPlansTable({
                     className="toggle toggle-primary toggle-sm"
                     checked={p.active === 1}
                     onChange={async (e) => {
-                      await onUpdatePlan(p.id!, { active: e.target.checked ? 1 : 0 });
+                      await onToggleActive(p.id!, e.target.checked);
                     }}
                   />
                 </td>
@@ -108,6 +73,21 @@ export default function PowerPlansTable({
                           <span className="text-gray-400">+</span>
                           <span className="font-mono text-sm">${p.daily_charge.toFixed(2)}/day</span>
                         </>
+                      )}
+                    </div>
+                  ) : p.electricity_rates ? (
+                    <div className="flex flex-col gap-1">
+                      {Object.entries(JSON.parse(p.electricity_rates)).map(([rateType, value]) => (
+                        <div key={rateType} className="flex items-center gap-2">
+                          <span className="badge badge-sm capitalize">{rateType}</span>
+                          <span className="font-mono text-sm">${(value as number).toFixed(4)}/kWh</span>
+                        </div>
+                      ))}
+                      {p.daily_charge && (
+                        <div className="flex items-center gap-2">
+                          <span className="badge badge-ghost badge-sm">Daily</span>
+                          <span className="font-mono text-sm">${p.daily_charge.toFixed(2)}</span>
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -136,6 +116,15 @@ export default function PowerPlansTable({
                         <span className="badge badge-primary badge-sm">Flat</span>
                         <span className="font-mono text-sm">${p.gas_flat_rate?.toFixed(4)}/kWh</span>
                       </div>
+                    ) : p.gas_rates ? (
+                      <div className="flex flex-col gap-1">
+                        {Object.entries(JSON.parse(p.gas_rates)).map(([rateType, value]) => (
+                          <div key={rateType} className="flex items-center gap-2">
+                            <span className="badge badge-sm capitalize">{rateType}</span>
+                            <span className="font-mono text-sm">${(value as number).toFixed(4)}/kWh</span>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
@@ -155,14 +144,10 @@ export default function PowerPlansTable({
                 <td className="py-4 px-4">
                   <div className="flex gap-2">
                     <button
+                      type="button"
                       className="btn btn-sm btn-ghost gap-1"
-                      onClick={() => {
-                        if (editingId === p.id) {
-                          onCancelEdit();
-                        } else {
-                          onOpenEdit(p);
-                        }
-                      }}
+                      data-testid={`edit-plan-${p.id}`}
+                      onClick={() => onEdit(p)}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -177,13 +162,13 @@ export default function PowerPlansTable({
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         ></path>
                       </svg>
-                      <span className="hidden sm:inline">{editingId === p.id ? "Close" : "Edit"}</span>
+                      <span className="hidden sm:inline">Edit</span>
                     </button>
                     <button
                       className="btn btn-sm btn-ghost gap-1 text-error hover:bg-error hover:text-white"
                       onClick={() => {
                         if (confirm(`Delete plan "${p.retailer} - ${p.name}"?`)) {
-                          onDeletePlan(p.id!);
+                          onDelete(p.id!);
                         }
                       }}
                       title="Delete plan"
@@ -207,34 +192,23 @@ export default function PowerPlansTable({
                 </td>
               </tr>
               {editingId === p.id && editForm && (
-                <tr className="bg-blue-50 border-b border-stroke">
-                  <td colSpan={6} className="py-6 px-4 max-w-none">
-                    <div className="space-y-4 min-w-full max-w-full">
-                      <div className="flex items-center justify-between mb-4 sticky top-0 bg-blue-50 pb-2 z-10">
-                        <h4 className="font-bold text-lg">Edit Power Plan</h4>
-                        <button className="btn btn-sm btn-circle btn-ghost flex-shrink-0" onClick={onCancelEdit}>
-                          ✕
+                <tr className="bg-base-200/60">
+                  <td colSpan={6} className="py-5 px-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-lg">Edit Power Plan</h4>
+                      <div className="flex gap-2">
+                        <button className="btn btn-sm" onClick={onSaveEdit} data-testid="save-edit-plan">
+                          Save changes
+                        </button>
+                        <button className="btn btn-sm btn-ghost" onClick={onCancelEdit}>
+                          Cancel
                         </button>
                       </div>
+                    </div>
+                    <div className="rounded-box border border-base-300 bg-base-100 p-4">
                       <PowerPlanForm
                         form={editForm}
-                        setForm={setEditForm}
-                        schedule={editSchedule}
-                        gasSchedule={editGasSchedule}
-                        showSchedule={showEditSchedule}
-                        showGasSchedule={showEditGasSchedule}
-                        setShowSchedule={setShowEditSchedule}
-                        setShowGasSchedule={setShowEditGasSchedule}
-                        updateDaySchedule={updateEditDaySchedule}
-                        updateGasDaySchedule={updateEditGasDaySchedule}
-                        addPeakPeriod={addEditPeakPeriod}
-                        addGasPeakPeriod={addEditGasPeakPeriod}
-                        removePeakPeriod={removeEditPeakPeriod}
-                        removeGasPeakPeriod={removeEditGasPeakPeriod}
-                        updatePeakPeriod={updateEditPeakPeriod}
-                        updateGasPeakPeriod={updateEditGasPeakPeriod}
-                        copyScheduleToAll={copyEditScheduleToAll}
-                        copyGasScheduleToAll={copyEditGasScheduleToAll}
+                        setForm={(f) => setEditForm(f)}
                         onSubmit={onSaveEdit}
                         submitLabel="Save Changes"
                         onCancel={onCancelEdit}

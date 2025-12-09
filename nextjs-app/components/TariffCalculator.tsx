@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import TariffSettings from "./TariffSettings";
 import PlanSelector from "./PlanSelector";
 import ScheduleEditor from "./ScheduleEditor";
@@ -17,6 +17,50 @@ import {
 } from "../types/tariff";
 import { DEFAULT_SCHEDULE, DAYS } from "../constants/tariff";
 import { calculateCostsForTariff } from "../utils/tariffCalculations";
+import { RateDefinition } from "@/types/rates";
+
+function parseRateDefinition(rateJson?: string | null): RateDefinition | null {
+  if (!rateJson) return null;
+  try {
+    const parsed = JSON.parse(rateJson);
+    if (parsed && typeof parsed === "object") {
+      return parsed as RateDefinition;
+    }
+    return null;
+  } catch (err) {
+    console.warn("Failed to parse rate definition", err);
+    return null;
+  }
+}
+
+function deriveTwoTierRates(rates: RateDefinition | null) {
+  if (!rates) return { hasRates: false, isSingleRate: false, peak: undefined, offPeak: undefined } as const;
+
+  const entries = Object.entries(rates).filter(([, value]) => typeof value === "number" && !Number.isNaN(value));
+  if (entries.length === 0)
+    return { hasRates: false, isSingleRate: false, peak: undefined, offPeak: undefined } as const;
+
+  const values = entries.map(([, value]) => value);
+  if (entries.length === 1) {
+    return { hasRates: true, isSingleRate: true, flatRate: values[0], peak: undefined, offPeak: undefined } as const;
+  }
+
+  const normalized = entries.map(([key, value]) => [key.toLowerCase(), value] as const);
+  const pick = (candidates: string[]) => {
+    const match = normalized.find(([name]) => candidates.includes(name));
+    return match ? match[1] : undefined;
+  };
+
+  const peak = pick(["peak", "day", "shoulder"]);
+  const offPeak = pick(["offpeak", "off_peak", "night", "free"]);
+
+  return {
+    hasRates: true,
+    isSingleRate: false,
+    peak: peak ?? Math.max(...values),
+    offPeak: offPeak ?? Math.min(...values),
+  } as const;
+}
 
 export default function TariffCalculator({ allData, gasData = [] }: TariffCalculatorProps) {
   // Internal state for selected plans
@@ -26,7 +70,10 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
   // Comparison filter: 'both', 'electric', 'gas'
   const [compareType, setCompareType] = useState<CompareType>("both");
   const [compareMode, setCompareMode] = useState(false);
-  const hasGas = gasData.length > 0;
+  const hasGas = useMemo(
+    () => gasData.length > 0 || selectedPlan?.has_gas === 1 || selectedPlan2?.has_gas === 1,
+    [gasData, selectedPlan, selectedPlan2]
+  );
 
   // Tariff 1
   const [isFlatRate, setIsFlatRate] = useState(false);
@@ -62,48 +109,104 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
   const [showAdvanced2, setShowAdvanced2] = useState(false);
   const [showGasAdvanced2, setShowGasAdvanced2] = useState(false);
 
-  // Auto-fill from selected plan 1
+  // Auto-fill from selected plan 1, including flexible rate structures
   useEffect(() => {
     if (!selectedPlan) return;
-    setIsFlatRate(selectedPlan.is_flat_rate === 1);
-    if (selectedPlan.is_flat_rate === 1) {
-      if (selectedPlan.flat_rate != null) setFlatRate(selectedPlan.flat_rate);
-    } else {
-      if (selectedPlan.peak_rate != null) setPeakRate(selectedPlan.peak_rate);
-      if (selectedPlan.off_peak_rate != null) setOffPeakRate(selectedPlan.off_peak_rate);
+
+    const electricityRateDef = parseRateDefinition(selectedPlan.electricity_rates);
+    const electricityRates = deriveTwoTierRates(electricityRateDef);
+
+    if (process.env.NODE_ENV === "development" && selectedPlan.electricity_rates) {
+      console.log("[TariffCalc] Plan 1 selected:", {
+        planName: selectedPlan.name,
+        electricityRatesJSON: selectedPlan.electricity_rates,
+        parsedDef: electricityRateDef,
+        derived: electricityRates,
+      });
     }
+
+    const shouldUseFlat = selectedPlan.is_flat_rate === 1 || electricityRates.isSingleRate === true;
+
+    setIsFlatRate(shouldUseFlat);
+    if (shouldUseFlat) {
+      const rateValue =
+        electricityRates.flatRate ?? selectedPlan.flat_rate ?? electricityRates.peak ?? electricityRates.offPeak ?? 0.3;
+      setFlatRate(rateValue);
+    } else {
+      if (electricityRates.peak !== undefined) setPeakRate(electricityRates.peak);
+      else if (selectedPlan.peak_rate != null) setPeakRate(selectedPlan.peak_rate);
+
+      if (electricityRates.offPeak !== undefined) setOffPeakRate(electricityRates.offPeak);
+      else if (selectedPlan.off_peak_rate != null) setOffPeakRate(selectedPlan.off_peak_rate);
+    }
+
     if (selectedPlan.daily_charge != null) setDailyCharge(selectedPlan.daily_charge);
+
     if (selectedPlan.has_gas === 1) {
-      setIsGasFlatRate(selectedPlan.gas_is_flat_rate === 1);
-      if (selectedPlan.gas_is_flat_rate === 1) {
-        if (selectedPlan.gas_flat_rate != null) setGasRate(selectedPlan.gas_flat_rate);
+      const gasRateDef = parseRateDefinition(selectedPlan.gas_rates);
+      const gasRates = deriveTwoTierRates(gasRateDef);
+      const gasFlatMode = selectedPlan.gas_is_flat_rate === 1 || gasRates.isSingleRate === true;
+
+      setIsGasFlatRate(gasFlatMode);
+      if (gasFlatMode) {
+        const rateValue = gasRates.flatRate ?? selectedPlan.gas_flat_rate ?? gasRates.peak ?? gasRates.offPeak ?? 0.15;
+        setGasRate(rateValue);
       } else {
-        if (selectedPlan.gas_peak_rate != null) setGasPeakRate(selectedPlan.gas_peak_rate);
-        if (selectedPlan.gas_off_peak_rate != null) setGasOffPeakRate(selectedPlan.gas_off_peak_rate);
+        if (gasRates.peak !== undefined) setGasPeakRate(gasRates.peak);
+        else if (selectedPlan.gas_peak_rate != null) setGasPeakRate(selectedPlan.gas_peak_rate);
+
+        if (gasRates.offPeak !== undefined) setGasOffPeakRate(gasRates.offPeak);
+        else if (selectedPlan.gas_off_peak_rate != null) setGasOffPeakRate(selectedPlan.gas_off_peak_rate);
       }
+
       if (selectedPlan.gas_daily_charge != null) setGasDailyCharge(selectedPlan.gas_daily_charge);
     }
   }, [selectedPlan]);
 
-  // Auto-fill from selected plan 2
+  // Auto-fill from selected plan 2, including flexible rate structures
   useEffect(() => {
     if (!selectedPlan2) return;
-    setIsFlatRate2(selectedPlan2.is_flat_rate === 1);
-    if (selectedPlan2.is_flat_rate === 1) {
-      if (selectedPlan2.flat_rate != null) setFlatRate2(selectedPlan2.flat_rate);
+
+    const electricityRateDef = parseRateDefinition(selectedPlan2.electricity_rates);
+    const electricityRates = deriveTwoTierRates(electricityRateDef);
+    const shouldUseFlat = selectedPlan2.is_flat_rate === 1 || electricityRates.isSingleRate === true;
+
+    setIsFlatRate2(shouldUseFlat);
+    if (shouldUseFlat) {
+      const rateValue =
+        electricityRates.flatRate ??
+        selectedPlan2.flat_rate ??
+        electricityRates.peak ??
+        electricityRates.offPeak ??
+        0.3;
+      setFlatRate2(rateValue);
     } else {
-      if (selectedPlan2.peak_rate != null) setPeakRate2(selectedPlan2.peak_rate);
-      if (selectedPlan2.off_peak_rate != null) setOffPeakRate2(selectedPlan2.off_peak_rate);
+      if (electricityRates.peak !== undefined) setPeakRate2(electricityRates.peak);
+      else if (selectedPlan2.peak_rate != null) setPeakRate2(selectedPlan2.peak_rate);
+
+      if (electricityRates.offPeak !== undefined) setOffPeakRate2(electricityRates.offPeak);
+      else if (selectedPlan2.off_peak_rate != null) setOffPeakRate2(selectedPlan2.off_peak_rate);
     }
+
     if (selectedPlan2.daily_charge != null) setDailyCharge2(selectedPlan2.daily_charge);
+
     if (selectedPlan2.has_gas === 1) {
-      setIsGasFlatRate2(selectedPlan2.gas_is_flat_rate === 1);
-      if (selectedPlan2.gas_is_flat_rate === 1) {
-        if (selectedPlan2.gas_flat_rate != null) setGasRate2(selectedPlan2.gas_flat_rate);
+      const gasRateDef = parseRateDefinition(selectedPlan2.gas_rates);
+      const gasRates = deriveTwoTierRates(gasRateDef);
+      const gasFlatMode = selectedPlan2.gas_is_flat_rate === 1 || gasRates.isSingleRate === true;
+
+      setIsGasFlatRate2(gasFlatMode);
+      if (gasFlatMode) {
+        const rateValue = gasRates.flatRate ?? selectedPlan2.gas_flat_rate ?? gasRates.peak ?? gasRates.offPeak ?? 0.15;
+        setGasRate2(rateValue);
       } else {
-        if (selectedPlan2.gas_peak_rate != null) setGasPeakRate2(selectedPlan2.gas_peak_rate);
-        if (selectedPlan2.gas_off_peak_rate != null) setGasOffPeakRate2(selectedPlan2.gas_off_peak_rate);
+        if (gasRates.peak !== undefined) setGasPeakRate2(gasRates.peak);
+        else if (selectedPlan2.gas_peak_rate != null) setGasPeakRate2(selectedPlan2.gas_peak_rate);
+
+        if (gasRates.offPeak !== undefined) setGasOffPeakRate2(gasRates.offPeak);
+        else if (selectedPlan2.gas_off_peak_rate != null) setGasOffPeakRate2(selectedPlan2.gas_off_peak_rate);
       }
+
       if (selectedPlan2.gas_daily_charge != null) setGasDailyCharge2(selectedPlan2.gas_daily_charge);
     }
   }, [selectedPlan2]);
@@ -134,6 +237,7 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
     peakRate,
     offPeakRate,
     dailyCharge,
+    hasGas,
     isFlatRate2,
     flatRate2,
     isGasFlatRate2,

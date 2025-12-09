@@ -1,55 +1,104 @@
-import React from "react";
-import ScheduleEditor from "@/components/ScheduleEditor";
+import React, { useState } from "react";
 import { PowerPlan } from "../hooks/usePowerPlans";
-import { WeekSchedule } from "@/types/tariff";
+import { RateDefinition } from "@/types/rates";
+import RateEditor from "@/components/RateEditor";
+import MultiRateScheduleEditor, {
+  MultiRateWeekSchedule,
+  RatePeriod as ScheduleRatePeriod,
+} from "@/components/MultiRateScheduleEditor";
+import { DAYS } from "@/constants/tariff";
 
 interface PowerPlanFormProps {
   form: PowerPlan;
   setForm: (form: PowerPlan) => void;
-  schedule: WeekSchedule;
-  gasSchedule: WeekSchedule;
-  showSchedule: boolean;
-  showGasSchedule: boolean;
-  setShowSchedule: (show: boolean) => void;
-  setShowGasSchedule: (show: boolean) => void;
-  updateDaySchedule: (day: string, updates: any) => void;
-  updateGasDaySchedule: (day: string, updates: any) => void;
-  addPeakPeriod: (day: string) => void;
-  addGasPeakPeriod: (day: string) => void;
-  removePeakPeriod: (day: string, id: string) => void;
-  removeGasPeakPeriod: (day: string, id: string) => void;
-  updatePeakPeriod: (day: string, id: string, field: "start" | "end", value: string) => void;
-  updateGasPeakPeriod: (day: string, id: string, field: "start" | "end", value: string) => void;
-  copyScheduleToAll: (day: string) => void;
-  copyGasScheduleToAll: (day: string) => void;
   onSubmit: () => void;
   submitLabel?: string;
   onCancel?: () => void;
 }
 
+// Helper to create initial empty schedule
+const createEmptySchedule = (defaultRate: string): MultiRateWeekSchedule => {
+  const schedule: MultiRateWeekSchedule = {};
+  DAYS.forEach((day) => {
+    schedule[day.key] = {
+      periods: [],
+      defaultRate,
+    };
+  });
+  return schedule;
+};
+
 export default function PowerPlanForm({
   form,
   setForm,
-  schedule,
-  gasSchedule,
-  showSchedule,
-  showGasSchedule,
-  setShowSchedule,
-  setShowGasSchedule,
-  updateDaySchedule,
-  updateGasDaySchedule,
-  addPeakPeriod,
-  addGasPeakPeriod,
-  removePeakPeriod,
-  removeGasPeakPeriod,
-  updatePeakPeriod,
-  updateGasPeakPeriod,
-  copyScheduleToAll,
-  copyGasScheduleToAll,
   onSubmit,
   submitLabel = "Create Plan",
   onCancel,
 }: PowerPlanFormProps) {
+  // Parse rates from JSON strings
+  const [electricityRates, setElectricityRates] = useState<RateDefinition>(() => {
+    if (form.electricity_rates) {
+      try {
+        return JSON.parse(form.electricity_rates);
+      } catch {
+        return {};
+      }
+    }
+    // Default rates if using legacy peak/off-peak
+    if (form.peak_rate !== null || form.off_peak_rate !== null) {
+      return {
+        peak: form.peak_rate || 0,
+        offpeak: form.off_peak_rate || 0,
+      };
+    }
+    return { day: 0.25, night: 0.15 };
+  });
+
+  const [gasRates, setGasRates] = useState<RateDefinition>(() => {
+    if (form.gas_rates) {
+      try {
+        return JSON.parse(form.gas_rates);
+      } catch {
+        return {};
+      }
+    }
+    if (form.gas_peak_rate !== null || form.gas_off_peak_rate !== null) {
+      return {
+        peak: form.gas_peak_rate || 0,
+        offpeak: form.gas_off_peak_rate || 0,
+      };
+    }
+    return { day: 0.025, night: 0.02 };
+  });
+
+  const [electricitySchedule, setElectricitySchedule] = useState<MultiRateWeekSchedule>(() =>
+    createEmptySchedule(Object.keys(electricityRates)[0] || "day")
+  );
+
+  const [gasSchedule, setGasSchedule] = useState<MultiRateWeekSchedule>(() =>
+    createEmptySchedule(Object.keys(gasRates)[0] || "day")
+  );
+
+  const [showElectricitySchedule, setShowElectricitySchedule] = useState(false);
+  const [showGasSchedule, setShowGasSchedule] = useState(false);
+
+  // Sync rates to form when changed
+  const handleElectricityRatesChange = (rates: RateDefinition) => {
+    setElectricityRates(rates);
+    setForm({
+      ...form,
+      electricity_rates: JSON.stringify(rates),
+    });
+  };
+
+  const handleGasRatesChange = (rates: RateDefinition) => {
+    setGasRates(rates);
+    setForm({
+      ...form,
+      gas_rates: JSON.stringify(rates),
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -106,34 +155,13 @@ export default function PowerPlanForm({
             />
           </div>
         ) : (
-          <>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Peak Rate ($/kWh)</span>
-              </label>
-              <input
-                type="number"
-                step="0.0001"
-                className="input input-bordered focus:input-primary"
-                value={form.peak_rate ?? ""}
-                onChange={(e) => setForm({ ...form, peak_rate: e.target.value ? parseFloat(e.target.value) : null })}
-              />
-            </div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Off-Peak Rate ($/kWh)</span>
-              </label>
-              <input
-                type="number"
-                step="0.0001"
-                className="input input-bordered focus:input-primary"
-                value={form.off_peak_rate ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, off_peak_rate: e.target.value ? parseFloat(e.target.value) : null })
-                }
-              />
-            </div>
-          </>
+          <div className="md:col-span-2">
+            <RateEditor
+              rates={electricityRates}
+              onChange={handleElectricityRatesChange}
+              title="Electricity Rate Configuration"
+            />
+          </div>
         )}
         <div className="form-control">
           <label className="label">
@@ -149,23 +177,24 @@ export default function PowerPlanForm({
         </div>
       </div>
 
-      {form.is_flat_rate === 0 && (
+      {form.is_flat_rate === 0 && Object.keys(electricityRates).length > 0 && (
         <div className="mt-6 p-5 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="text-sm text-blue-700 mb-3">
+            ℹ️ <strong>Schedule Editor (Coming Soon)</strong>: Define custom time-based rates. Currently, rates are
+            applied as flat peak/off-peak. Schedule persistence is planned for a future update.
+          </div>
           <button
-            onClick={() => setShowSchedule(!showSchedule)}
+            onClick={() => setShowElectricitySchedule(!showElectricitySchedule)}
             className="btn btn-sm gap-2 mb-4"
             style={{ background: "#e3f2fd", border: "1px solid #90caf9", color: "#1976d2" }}
           >
-            {showSchedule ? "▼" : "▶"} Electricity Peak/Off-Peak Schedule
+            {showElectricitySchedule ? "▼" : "▶"} Preview Electricity Rate Schedule (Preview Only)
           </button>
-          {showSchedule && (
-            <ScheduleEditor
-              schedule={schedule}
-              updateScheduleFn={updateDaySchedule}
-              addPeriodFn={addPeakPeriod}
-              removePeriodFn={removePeakPeriod}
-              updatePeriodFn={updatePeakPeriod}
-              copyToAllFn={copyScheduleToAll}
+          {showElectricitySchedule && (
+            <MultiRateScheduleEditor
+              schedule={electricitySchedule}
+              rateTypes={electricityRates}
+              onUpdate={setElectricitySchedule}
             />
           )}
         </div>
@@ -216,36 +245,9 @@ export default function PowerPlanForm({
                 />
               </div>
             ) : (
-              <>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Peak Rate ($/kWh)</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    className="input input-bordered focus:input-primary"
-                    value={form.gas_peak_rate ?? ""}
-                    onChange={(e) =>
-                      setForm({ ...form, gas_peak_rate: e.target.value ? parseFloat(e.target.value) : null })
-                    }
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Off-Peak Rate ($/kWh)</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    className="input input-bordered focus:input-primary"
-                    value={form.gas_off_peak_rate ?? ""}
-                    onChange={(e) =>
-                      setForm({ ...form, gas_off_peak_rate: e.target.value ? parseFloat(e.target.value) : null })
-                    }
-                  />
-                </div>
-              </>
+              <div className="md:col-span-2">
+                <RateEditor rates={gasRates} onChange={handleGasRatesChange} title="Gas Rate Configuration" />
+              </div>
             )}
             <div className="form-control">
               <label className="label">
@@ -263,24 +265,21 @@ export default function PowerPlanForm({
             </div>
           </div>
 
-          {form.gas_is_flat_rate === 0 && (
+          {form.gas_is_flat_rate === 0 && Object.keys(gasRates).length > 0 && (
             <div className="mt-6 p-5 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="text-sm text-orange-700 mb-3">
+                ℹ️ <strong>Schedule Editor (Coming Soon)</strong>: Define custom time-based rates. Currently, rates are
+                applied as flat peak/off-peak. Schedule persistence is planned for a future update.
+              </div>
               <button
                 onClick={() => setShowGasSchedule(!showGasSchedule)}
                 className="btn btn-sm gap-2 mb-4"
                 style={{ background: "#ffe0b2", border: "1px solid #ffb74d", color: "#f57c00" }}
               >
-                {showGasSchedule ? "▼" : "▶"} Gas Peak/Off-Peak Schedule
+                {showGasSchedule ? "▼" : "▶"} Preview Gas Rate Schedule (Preview Only)
               </button>
               {showGasSchedule && (
-                <ScheduleEditor
-                  schedule={gasSchedule}
-                  updateScheduleFn={updateGasDaySchedule}
-                  addPeriodFn={addGasPeakPeriod}
-                  removePeriodFn={removeGasPeakPeriod}
-                  updatePeriodFn={updateGasPeakPeriod}
-                  copyToAllFn={copyGasScheduleToAll}
-                />
+                <MultiRateScheduleEditor schedule={gasSchedule} rateTypes={gasRates} onUpdate={setGasSchedule} />
               )}
             </div>
           )}

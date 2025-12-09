@@ -2,10 +2,8 @@
 
 import React, { useState } from "react";
 import { usePowerPlans } from "./hooks/usePowerPlans";
-import { useScheduleManagement } from "./hooks/useScheduleManagement";
 import PowerPlanForm from "./components/PowerPlanForm";
 import PowerPlansTable from "./components/PowerPlansTable";
-import { DEFAULT_SCHEDULE } from "@/constants/tariff";
 import { PowerPlan } from "./hooks/usePowerPlans";
 
 export default function PowerPlansAdminPage() {
@@ -18,32 +16,24 @@ export default function PowerPlansAdminPage() {
     active: 1,
     is_flat_rate: 1,
     flat_rate: null,
-    peak_rate: null,
-    off_peak_rate: null,
     daily_charge: null,
     has_gas: 0,
     gas_is_flat_rate: 1,
     gas_flat_rate: null,
-    gas_peak_rate: null,
-    gas_off_peak_rate: null,
     gas_daily_charge: null,
+    electricity_rates: null,
+    gas_rates: null,
   });
-
-  // Create form schedule management
-  const createSchedule = useScheduleManagement();
 
   // Edit form state
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<PowerPlan | null>(null);
 
-  // Edit form schedule management
-  const editSchedule = useScheduleManagement();
-
   // Handle create plan
   const handleCreatePlan = async () => {
     setError(null);
     try {
-      await createPlan(form, createSchedule.schedule, createSchedule.gasSchedule);
+      await createPlan(form);
 
       // Reset form
       setForm({
@@ -52,17 +42,14 @@ export default function PowerPlansAdminPage() {
         active: 1,
         is_flat_rate: 1,
         flat_rate: null,
-        peak_rate: null,
-        off_peak_rate: null,
         daily_charge: null,
         has_gas: 0,
         gas_is_flat_rate: 1,
         gas_flat_rate: null,
-        gas_peak_rate: null,
-        gas_off_peak_rate: null,
         gas_daily_charge: null,
+        electricity_rates: null,
+        gas_rates: null,
       });
-      createSchedule.resetSchedule();
     } catch (err) {
       // Error already set in hook
     }
@@ -72,10 +59,6 @@ export default function PowerPlansAdminPage() {
   const handleOpenEdit = (plan: PowerPlan) => {
     setEditingId(plan.id || null);
     setEditForm(plan);
-    editSchedule.setSchedule(DEFAULT_SCHEDULE);
-    editSchedule.setGasSchedule(DEFAULT_SCHEDULE);
-    editSchedule.setShowSchedule(false);
-    editSchedule.setShowGasSchedule(false);
   };
 
   // Handle save edit
@@ -83,13 +66,7 @@ export default function PowerPlansAdminPage() {
     if (!editForm || !editingId) return;
     setError(null);
     try {
-      const payload = {
-        ...editForm,
-        schedule: editForm.is_flat_rate === 0 ? editSchedule.schedule : undefined,
-        gasSchedule: editForm.has_gas === 1 && editForm.gas_is_flat_rate === 0 ? editSchedule.gasSchedule : undefined,
-      };
-
-      await updatePlan(editingId, payload);
+      await updatePlan(editingId, editForm);
       setEditingId(null);
       setEditForm(null);
     } catch (err) {
@@ -234,28 +211,7 @@ export default function PowerPlansAdminPage() {
               Create New Power Plan
             </h2>
             <div className="divider my-2"></div>
-            <PowerPlanForm
-              form={form}
-              setForm={setForm}
-              schedule={createSchedule.schedule}
-              gasSchedule={createSchedule.gasSchedule}
-              showSchedule={createSchedule.showSchedule}
-              showGasSchedule={createSchedule.showGasSchedule}
-              setShowSchedule={createSchedule.setShowSchedule}
-              setShowGasSchedule={createSchedule.setShowGasSchedule}
-              updateDaySchedule={createSchedule.updateDaySchedule}
-              updateGasDaySchedule={createSchedule.updateGasDaySchedule}
-              addPeakPeriod={createSchedule.addPeakPeriod}
-              addGasPeakPeriod={createSchedule.addGasPeakPeriod}
-              removePeakPeriod={createSchedule.removePeakPeriod}
-              removeGasPeakPeriod={createSchedule.removeGasPeakPeriod}
-              updatePeakPeriod={createSchedule.updatePeakPeriod}
-              updateGasPeakPeriod={createSchedule.updateGasPeakPeriod}
-              copyScheduleToAll={createSchedule.copyScheduleToAll}
-              copyGasScheduleToAll={createSchedule.copyGasScheduleToAll}
-              onSubmit={handleCreatePlan}
-              submitLabel="Create Plan"
-            />
+            <PowerPlanForm form={form} setForm={setForm} onSubmit={handleCreatePlan} submitLabel="Create Plan" />
           </div>
         </div>
 
@@ -282,29 +238,12 @@ export default function PowerPlansAdminPage() {
               plans={plans}
               editingId={editingId}
               editForm={editForm}
-              editSchedule={editSchedule.schedule}
-              editGasSchedule={editSchedule.gasSchedule}
-              showEditSchedule={editSchedule.showSchedule}
-              showEditGasSchedule={editSchedule.showGasSchedule}
-              setEditingId={setEditingId}
               setEditForm={setEditForm}
-              setShowEditSchedule={editSchedule.setShowSchedule}
-              setShowEditGasSchedule={editSchedule.setShowGasSchedule}
-              updateEditDaySchedule={editSchedule.updateDaySchedule}
-              updateEditGasDaySchedule={editSchedule.updateGasDaySchedule}
-              addEditPeakPeriod={editSchedule.addPeakPeriod}
-              addEditGasPeakPeriod={editSchedule.addGasPeakPeriod}
-              removeEditPeakPeriod={editSchedule.removePeakPeriod}
-              removeEditGasPeakPeriod={editSchedule.removeGasPeakPeriod}
-              updateEditPeakPeriod={editSchedule.updatePeakPeriod}
-              updateEditGasPeakPeriod={editSchedule.updateGasPeakPeriod}
-              copyEditScheduleToAll={editSchedule.copyScheduleToAll}
-              copyEditGasScheduleToAll={editSchedule.copyGasScheduleToAll}
-              onUpdatePlan={updatePlan}
-              onDeletePlan={deletePlan}
-              onSaveEdit={handleSaveEdit}
+              onToggleActive={async (id, active) => updatePlan(id, { active: active ? 1 : 0 })}
+              onEdit={handleOpenEdit}
               onCancelEdit={handleCancelEdit}
-              onOpenEdit={handleOpenEdit}
+              onSaveEdit={handleSaveEdit}
+              onDelete={deletePlan}
             />
           </div>
         </div>

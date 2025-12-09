@@ -18,6 +18,8 @@ interface PowerPlan {
   gas_peak_rate?: number | null;
   gas_off_peak_rate?: number | null;
   gas_daily_charge?: number | null;
+  electricity_rates?: string | null;
+  gas_rates?: string | null;
 }
 
 interface PlanSelectorProps {
