@@ -46,9 +46,9 @@ export default function CostComparisonTable({ costData, costData2, compareType, 
                 });
                 // Tariff 1
                 const elec1 =
-                  costData.monthly[mKey].peakCost +
-                  costData.monthly[mKey].offPeakCost +
-                  costData.monthly[mKey].dailyCharge;
+                  (costData.monthly[mKey].peakCost || 0) +
+                  (costData.monthly[mKey].offPeakCost || 0) +
+                  (costData.monthly[mKey].dailyCharge || 0);
                 const gas1 =
                   (costData.monthly[mKey].gasPeakCost || 0) +
                   (costData.monthly[mKey].gasOffPeakCost || 0) +

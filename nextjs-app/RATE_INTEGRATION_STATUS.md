@@ -26,6 +26,16 @@
 - Flat rate plans still work
 - New flexible rates coexist with legacy fields
 
+### 4. **Plan Details Display** (NEW)
+
+- Visual component shows all rates from a selected plan
+- Appears below PlanSelector in both single and comparison views
+- Shows flexible rate definitions in user-friendly format (e.g., "Night: €0.15", "Day: €0.25")
+- Color-coded sections for electricity (blue) and gas (orange)
+- Displays daily charges if configured
+- Fallback display for legacy peak/off-peak rates
+- Component: `PlanDetailsDisplay.tsx`
+
 ---
 
 ## What's NOT Implemented (Yet) ⏳

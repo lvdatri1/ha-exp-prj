@@ -3,6 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import TariffSettings from "./TariffSettings";
 import PlanSelector from "./PlanSelector";
+import PlanDetailsDisplay from "./PlanDetailsDisplay";
+import RateEditor from "./RateEditor";
+import MultiRateScheduleEditor, { MultiRateWeekSchedule } from "./MultiRateScheduleEditor";
 import ScheduleEditor from "./ScheduleEditor";
 import CostComparisonTable from "./CostComparisonTable";
 import SingleTariffTable from "./SingleTariffTable";
@@ -16,7 +19,11 @@ import {
   CostData,
 } from "../types/tariff";
 import { DEFAULT_SCHEDULE, DAYS } from "../constants/tariff";
-import { calculateCostsForTariff } from "../utils/tariffCalculations";
+import {
+  calculateCostsForTariff,
+  calculateCostsWithMultiRates,
+  MultiRateTariffConfig,
+} from "../utils/tariffCalculations";
 import { RateDefinition } from "@/types/rates";
 
 function parseRateDefinition(rateJson?: string | null): RateDefinition | null {
@@ -109,6 +116,20 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
   const [showAdvanced2, setShowAdvanced2] = useState(false);
   const [showGasAdvanced2, setShowGasAdvanced2] = useState(false);
 
+  // New: Multi-rate editing state for Tariff 1
+  const [useMultiRate1, setUseMultiRate1] = useState(false);
+  const [electricityRates1, setElectricityRates1] = useState<RateDefinition>({ day: 0.25, night: 0.15 });
+  const [electricitySchedule1, setElectricitySchedule1] = useState<MultiRateWeekSchedule>({});
+  const [gasRates1, setGasRates1] = useState<RateDefinition>({ day: 0.025, night: 0.02 });
+  const [gasSchedule1, setGasSchedule1] = useState<MultiRateWeekSchedule>({});
+
+  // New: Multi-rate editing state for Tariff 2
+  const [useMultiRate2, setUseMultiRate2] = useState(false);
+  const [electricityRates2, setElectricityRates2] = useState<RateDefinition>({ day: 0.25, night: 0.15 });
+  const [electricitySchedule2, setElectricitySchedule2] = useState<MultiRateWeekSchedule>({});
+  const [gasRates2, setGasRates2] = useState<RateDefinition>({ day: 0.025, night: 0.02 });
+  const [gasSchedule2_sched, setGasSchedule2_sched] = useState<MultiRateWeekSchedule>({});
+
   // Auto-fill from selected plan 1, including flexible rate structures
   useEffect(() => {
     if (!selectedPlan) return;
@@ -125,6 +146,34 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
       });
     }
 
+    // Initialize multi-rate state from selected plan
+    if (electricityRateDef && Object.keys(electricityRateDef).length > 0) {
+      setElectricityRates1(electricityRateDef);
+      // Initialize empty schedule for all days
+      const schedule: MultiRateWeekSchedule = {};
+      DAYS.forEach((day) => {
+        schedule[day.key] = {
+          periods: [],
+          defaultRate: Object.keys(electricityRateDef)[0] || "day",
+        };
+      });
+      setElectricitySchedule1(schedule);
+    }
+
+    if (selectedPlan.gas_rates) {
+      const gasRateDef = parseRateDefinition(selectedPlan.gas_rates);
+      if (gasRateDef) {
+        setGasRates1(gasRateDef);
+        const schedule: MultiRateWeekSchedule = {};
+        DAYS.forEach((day) => {
+          schedule[day.key] = {
+            periods: [],
+            defaultRate: Object.keys(gasRateDef)[0] || "day",
+          };
+        });
+        setGasSchedule1(schedule);
+      }
+    }
     const shouldUseFlat = selectedPlan.is_flat_rate === 1 || electricityRates.isSingleRate === true;
 
     setIsFlatRate(shouldUseFlat);
@@ -251,6 +300,16 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
     offPeakRate2,
     dailyCharge2,
     compareMode,
+    useMultiRate1,
+    electricityRates1,
+    electricitySchedule1,
+    gasRates1,
+    gasSchedule1,
+    useMultiRate2,
+    electricityRates2,
+    electricitySchedule2,
+    gasRates2,
+    gasSchedule2_sched,
   ]);
 
   function restoreSettings() {
@@ -282,46 +341,98 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
   function calculateCosts() {
     if (!allData || allData.length === 0) return;
 
-    const result = calculateCostsForTariff(
-      allData,
-      gasData,
-      hasGas,
-      isFlatRate,
-      flatRate,
-      schedule,
-      peakRate,
-      offPeakRate,
-      dailyCharge,
-      isGasFlatRate,
-      gasRate,
-      gasPeakRate,
-      gasOffPeakRate,
-      gasSchedule,
-      gasDailyCharge
-    );
+    let result: CostData | null = null;
+
+    if (useMultiRate1) {
+      // Use multi-rate calculation
+      const elecConfig: MultiRateTariffConfig = {
+        isFlatMode: isFlatRate,
+        flatRate: isFlatRate ? flatRate : undefined,
+        rates: electricityRates1,
+        schedule: electricitySchedule1 as any,
+        dailyCharge: dailyCharge,
+      };
+
+      const gasConfig: MultiRateTariffConfig | undefined = hasGas
+        ? {
+            isFlatMode: isGasFlatRate,
+            flatRate: isGasFlatRate ? gasRate : undefined,
+            rates: gasRates1,
+            schedule: gasSchedule1 as any,
+            dailyCharge: gasDailyCharge,
+          }
+        : undefined;
+
+      result = calculateCostsWithMultiRates(allData, gasData, hasGas, elecConfig, gasConfig);
+    } else {
+      // Use legacy peak/off-peak calculation
+      result = calculateCostsForTariff(
+        allData,
+        gasData,
+        hasGas,
+        isFlatRate,
+        flatRate,
+        schedule,
+        peakRate,
+        offPeakRate,
+        dailyCharge,
+        isGasFlatRate,
+        gasRate,
+        gasPeakRate,
+        gasOffPeakRate,
+        gasSchedule,
+        gasDailyCharge
+      );
+    }
     setCostData(result);
   }
 
   function calculateCosts2() {
     if (!allData || allData.length === 0) return;
 
-    const result = calculateCostsForTariff(
-      allData,
-      gasData,
-      hasGas,
-      isFlatRate2,
-      flatRate2,
-      schedule2,
-      peakRate2,
-      offPeakRate2,
-      dailyCharge2,
-      isGasFlatRate2,
-      gasRate2,
-      gasPeakRate2,
-      gasOffPeakRate2,
-      gasSchedule2,
-      gasDailyCharge2
-    );
+    let result: CostData | null = null;
+
+    if (useMultiRate2) {
+      // Use multi-rate calculation
+      const elecConfig: MultiRateTariffConfig = {
+        isFlatMode: isFlatRate2,
+        flatRate: isFlatRate2 ? flatRate2 : undefined,
+        rates: electricityRates2,
+        schedule: electricitySchedule2 as any,
+        dailyCharge: dailyCharge2,
+      };
+
+      const gasConfig: MultiRateTariffConfig | undefined = hasGas
+        ? {
+            isFlatMode: isGasFlatRate2,
+            flatRate: isGasFlatRate2 ? gasRate2 : undefined,
+            rates: gasRates2,
+            schedule: gasSchedule2_sched as any,
+            dailyCharge: gasDailyCharge2,
+          }
+        : undefined;
+
+      result = calculateCostsWithMultiRates(allData, gasData, hasGas, elecConfig, gasConfig);
+    } else {
+      // Use legacy peak/off-peak calculation
+      result = calculateCostsForTariff(
+        allData,
+        gasData,
+        hasGas,
+        isFlatRate2,
+        flatRate2,
+        schedule2,
+        peakRate2,
+        offPeakRate2,
+        dailyCharge2,
+        isGasFlatRate2,
+        gasRate2,
+        gasPeakRate2,
+        gasOffPeakRate2,
+        gasSchedule2,
+        gasDailyCharge2
+      );
+    }
     setCostData2(result);
   }
 
@@ -562,6 +673,68 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
               <div className="card-body">
                 <h4 className="card-title text-primary">Tariff 1</h4>
                 <PlanSelector selectedPlan={selectedPlan} onSelect={setSelectedPlan} />
+                <PlanDetailsDisplay plan={selectedPlan} />
+
+                {/* Multi-Rate Editor Toggle */}
+                <div className="mt-4 flex gap-2">
+                  <button
+                    className={`btn btn-sm gap-2 ${useMultiRate1 ? "btn-primary" : "btn-outline"}`}
+                    onClick={() => setUseMultiRate1(!useMultiRate1)}
+                  >
+                    {useMultiRate1 ? "✓" : "+"} {useMultiRate1 ? "Custom Rates" : "Add Rates & Schedule"}
+                  </button>
+                </div>
+
+                {/* Multi-Rate Editor Section */}
+                {useMultiRate1 && (
+                  <div className="mt-4 p-4 bg-blue-100 rounded-lg border border-blue-300 space-y-4">
+                    <div className="text-sm font-semibold text-blue-900">⚡ Electricity</div>
+                    <div className="form-control mb-2">
+                      <label className="label cursor-pointer justify-start gap-2">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-primary"
+                          checked={isFlatRate}
+                          onChange={(e) => setIsFlatRate(e.target.checked)}
+                        />
+                        <span className="label-text text-sm">Flat Rate</span>
+                      </label>
+                    </div>
+                    {!isFlatRate && (
+                      <>
+                        <RateEditor
+                          rates={electricityRates1}
+                          onChange={setElectricityRates1}
+                          title="Electricity Rates"
+                        />
+                        {Object.keys(electricitySchedule1).length === 0 && (
+                          <button
+                            className="btn btn-xs btn-outline"
+                            onClick={() => {
+                              const schedule: MultiRateWeekSchedule = {};
+                              DAYS.forEach((day) => {
+                                schedule[day.key] = {
+                                  periods: [],
+                                  defaultRate: Object.keys(electricityRates1)[0] || "day",
+                                };
+                              });
+                              setElectricitySchedule1(schedule);
+                            }}
+                          >
+                            ⏰ Add Schedule
+                          </button>
+                        )}
+                        {Object.keys(electricitySchedule1).length > 0 && (
+                          <MultiRateScheduleEditor
+                            schedule={electricitySchedule1}
+                            rateTypes={electricityRates1}
+                            onUpdate={setElectricitySchedule1}
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 <TariffSettings
                   tariffNumber={1}
                   isFlatRate={isFlatRate}
@@ -617,6 +790,69 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
               <div className="card-body">
                 <h4 className="card-title text-warning">Tariff 2</h4>
                 <PlanSelector selectedPlan={selectedPlan2} onSelect={setSelectedPlan2} />
+                <PlanDetailsDisplay plan={selectedPlan2} />
+
+                {/* Multi-Rate Editor Toggle */}
+                <div className="mt-4 flex gap-2">
+                  <button
+                    className={`btn btn-sm gap-2 ${useMultiRate2 ? "btn-warning" : "btn-outline"}`}
+                    onClick={() => setUseMultiRate2(!useMultiRate2)}
+                  >
+                    {useMultiRate2 ? "✓" : "+"} {useMultiRate2 ? "Custom Rates" : "Add Rates & Schedule"}
+                  </button>
+                </div>
+
+                {/* Multi-Rate Editor Section */}
+                {useMultiRate2 && (
+                  <div className="mt-4 p-4 bg-orange-100 rounded-lg border border-orange-300 space-y-4">
+                    <div className="text-sm font-semibold text-orange-900">⚡ Electricity</div>
+                    <div className="form-control mb-2">
+                      <label className="label cursor-pointer justify-start gap-2">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-warning"
+                          checked={isFlatRate2}
+                          onChange={(e) => setIsFlatRate2(e.target.checked)}
+                        />
+                        <span className="label-text text-sm">Flat Rate</span>
+                      </label>
+                    </div>
+                    {!isFlatRate2 && (
+                      <>
+                        <RateEditor
+                          rates={electricityRates2}
+                          onChange={setElectricityRates2}
+                          title="Electricity Rates"
+                        />
+                        {Object.keys(electricitySchedule2).length === 0 && (
+                          <button
+                            className="btn btn-xs btn-outline"
+                            onClick={() => {
+                              const schedule: MultiRateWeekSchedule = {};
+                              DAYS.forEach((day) => {
+                                schedule[day.key] = {
+                                  periods: [],
+                                  defaultRate: Object.keys(electricityRates2)[0] || "day",
+                                };
+                              });
+                              setElectricitySchedule2(schedule);
+                            }}
+                          >
+                            ⏰ Add Schedule
+                          </button>
+                        )}
+                        {Object.keys(electricitySchedule2).length > 0 && (
+                          <MultiRateScheduleEditor
+                            schedule={electricitySchedule2}
+                            rateTypes={electricityRates2}
+                            onUpdate={setElectricitySchedule2}
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <TariffSettings
                   tariffNumber={2}
                   isFlatRate={isFlatRate2}
@@ -670,6 +906,120 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
         ) : (
           <div>
             <PlanSelector selectedPlan={selectedPlan} onSelect={setSelectedPlan} />
+            <PlanDetailsDisplay plan={selectedPlan} />
+
+            {/* Multi-Rate Editor Toggle */}
+            <div className="mt-4 flex gap-2">
+              <button
+                className={`btn btn-sm gap-2 ${useMultiRate1 ? "btn-primary" : "btn-outline"}`}
+                onClick={() => setUseMultiRate1(!useMultiRate1)}
+              >
+                {useMultiRate1 ? "✓" : "+"} {useMultiRate1 ? "Using Custom Rates" : "Add Custom Rates & Schedule"}
+              </button>
+            </div>
+
+            {/* Multi-Rate Editor Section */}
+            {useMultiRate1 && (
+              <div className="mt-6 p-5 bg-blue-50 rounded-lg border border-blue-200 space-y-6">
+                <div>
+                  <h4 className="font-semibold text-lg mb-4">⚡ Electricity Rates & Schedule</h4>
+                  <div className="form-control mb-4">
+                    <label className="label cursor-pointer justify-start gap-3">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary"
+                        checked={isFlatRate}
+                        onChange={(e) => setIsFlatRate(e.target.checked)}
+                      />
+                      <span className="label-text font-semibold">Flat Rate</span>
+                    </label>
+                  </div>
+
+                  {!isFlatRate && (
+                    <>
+                      <RateEditor rates={electricityRates1} onChange={setElectricityRates1} title="Electricity Rates" />
+                      <div className="mt-4 pt-4 border-t">
+                        <button
+                          className="btn btn-sm gap-2 mb-3"
+                          onClick={() => {
+                            // Toggle schedule visibility
+                            if (Object.keys(electricitySchedule1).length === 0) {
+                              const schedule: MultiRateWeekSchedule = {};
+                              DAYS.forEach((day) => {
+                                schedule[day.key] = {
+                                  periods: [],
+                                  defaultRate: Object.keys(electricityRates1)[0] || "day",
+                                };
+                              });
+                              setElectricitySchedule1(schedule);
+                            }
+                          }}
+                        >
+                          ⏰ Define Time-Based Schedules
+                        </button>
+                        {Object.keys(electricitySchedule1).length > 0 && (
+                          <MultiRateScheduleEditor
+                            schedule={electricitySchedule1}
+                            rateTypes={electricityRates1}
+                            onUpdate={setElectricitySchedule1}
+                          />
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {hasGas && (
+                  <div className="border-t pt-6">
+                    <h4 className="font-semibold text-lg mb-4">🔥 Gas Rates & Schedule</h4>
+                    <div className="form-control mb-4">
+                      <label className="label cursor-pointer justify-start gap-3">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary"
+                          checked={isGasFlatRate}
+                          onChange={(e) => setIsGasFlatRate(e.target.checked)}
+                        />
+                        <span className="label-text font-semibold">Flat Rate</span>
+                      </label>
+                    </div>
+
+                    {!isGasFlatRate && (
+                      <>
+                        <RateEditor rates={gasRates1} onChange={setGasRates1} title="Gas Rates" />
+                        <div className="mt-4 pt-4 border-t">
+                          <button
+                            className="btn btn-sm gap-2 mb-3"
+                            onClick={() => {
+                              if (Object.keys(gasSchedule1).length === 0) {
+                                const schedule: MultiRateWeekSchedule = {};
+                                DAYS.forEach((day) => {
+                                  schedule[day.key] = {
+                                    periods: [],
+                                    defaultRate: Object.keys(gasRates1)[0] || "day",
+                                  };
+                                });
+                                setGasSchedule1(schedule);
+                              }
+                            }}
+                          >
+                            ⏰ Define Time-Based Schedules
+                          </button>
+                          {Object.keys(gasSchedule1).length > 0 && (
+                            <MultiRateScheduleEditor
+                              schedule={gasSchedule1}
+                              rateTypes={gasRates1}
+                              onUpdate={setGasSchedule1}
+                            />
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <TariffSettings
               tariffNumber={1}
               isFlatRate={isFlatRate}

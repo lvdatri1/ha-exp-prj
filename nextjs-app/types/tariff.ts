@@ -41,24 +41,31 @@ export type WeekSchedule = {
 };
 
 export interface MonthlyCost {
-  peakCost: number;
-  offPeakCost: number;
+  peakCost?: number;
+  offPeakCost?: number;
   dailyCharge: number;
-  gasPeakCost: number;
-  gasOffPeakCost: number;
+  gasPeakCost?: number;
+  gasOffPeakCost?: number;
   gasDailyCharge: number;
+  // Multi-rate support
+  byRate?: Record<string, number>;
+  byGasRate?: Record<string, number>;
+  total?: number;
 }
 
 export interface CostData {
   monthly: { [key: string]: MonthlyCost };
   yearly: {
-    peak: number;
-    offPeak: number;
+    peak?: number;
+    offPeak?: number;
     daily: number;
-    gasPeak: number;
-    gasOffPeak: number;
+    gasPeak?: number;
+    gasOffPeak?: number;
     gasDaily: number;
     total: number;
+    // Multi-rate support
+    byRate?: Record<string, number>;
+    byGasRate?: Record<string, number>;
   };
 }
 

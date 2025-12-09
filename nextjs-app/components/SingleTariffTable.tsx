@@ -32,9 +32,9 @@ export default function SingleTariffTable({ costData, compareType, hasGas }: Sin
                   year: "numeric",
                 });
                 const electricityCost =
-                  costData.monthly[mKey].peakCost +
-                  costData.monthly[mKey].offPeakCost +
-                  costData.monthly[mKey].dailyCharge;
+                  (costData.monthly[mKey].peakCost || 0) +
+                  (costData.monthly[mKey].offPeakCost || 0) +
+                  (costData.monthly[mKey].dailyCharge || 0);
                 const totalGasCost =
                   (costData.monthly[mKey].gasPeakCost || 0) +
                   (costData.monthly[mKey].gasOffPeakCost || 0) +
@@ -82,7 +82,7 @@ export default function SingleTariffTable({ costData, compareType, hasGas }: Sin
           <div className="stat-value text-primary">
             $
             {(() => {
-              let elec = costData.yearly.peak + costData.yearly.offPeak + costData.yearly.daily;
+              let elec = (costData.yearly.peak || 0) + (costData.yearly.offPeak || 0) + costData.yearly.daily;
               let gas =
                 (costData.yearly.gasPeak || 0) + (costData.yearly.gasOffPeak || 0) + (costData.yearly.gasDaily || 0);
               if (compareType === "electric") return elec.toFixed(2);
@@ -92,7 +92,7 @@ export default function SingleTariffTable({ costData, compareType, hasGas }: Sin
           </div>
           <div className="stat-desc">
             {(() => {
-              let elec = costData.yearly.peak + costData.yearly.offPeak + costData.yearly.daily;
+              let elec = (costData.yearly.peak || 0) + (costData.yearly.offPeak || 0) + costData.yearly.daily;
               let gas =
                 (costData.yearly.gasPeak || 0) + (costData.yearly.gasOffPeak || 0) + (costData.yearly.gasDaily || 0);
               if (compareType === "electric") return "Electricity only";
