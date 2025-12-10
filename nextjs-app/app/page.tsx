@@ -36,7 +36,7 @@ export default function Home() {
 
   async function checkAuth() {
     try {
-      const response = await fetch("/api/auth/session");
+      const response = await fetch("/api/auth/session", { credentials: "include" });
       const data = await response.json();
 
       if (data.user) {
@@ -55,7 +55,10 @@ export default function Home() {
   async function loadData() {
     try {
       setLoading(true);
-      const [electricResponse, gasResponse] = await Promise.all([fetch("/api/data/all"), fetch("/api/gas/all")]);
+      const [electricResponse, gasResponse] = await Promise.all([
+        fetch("/api/data/all", { credentials: "include" }),
+        fetch("/api/gas/all", { credentials: "include" }),
+      ]);
 
       const electricResult = await electricResponse.json();
       const gasResult = await gasResponse.json();
@@ -74,7 +77,7 @@ export default function Home() {
 
   async function handleLogout() {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
       setUser(null);
       setAllData([]);
       setGasData([]);

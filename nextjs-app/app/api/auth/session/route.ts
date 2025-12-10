@@ -4,17 +4,22 @@ import { getUserById } from "@/lib/db";
 export async function GET(request: NextRequest) {
   try {
     const userId = request.cookies.get("session_user_id")?.value;
+    console.log("[SESSION] Cookie userId:", userId);
 
     if (!userId) {
+      console.log("[SESSION] No userId cookie found");
       return NextResponse.json({ user: null });
     }
 
     const user = await getUserById(parseInt(userId));
+    console.log("[SESSION] User from DB:", user?.username, "ID:", user?.id);
 
     if (!user) {
+      console.log("[SESSION] User not found in DB");
       return NextResponse.json({ user: null });
     }
 
+    console.log("[SESSION] Returning user:", user.username);
     return NextResponse.json({
       user: {
         id: user.id,
@@ -25,7 +30,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Session check error:", error);
+    console.error("[SESSION] Error:", error);
     return NextResponse.json({ user: null });
   }
 }

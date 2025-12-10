@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import TariffSettings from "./TariffSettings";
 import PlanSelector from "./PlanSelector";
 import PlanDetailsDisplay from "./PlanDetailsDisplay";
 import RateEditor from "./RateEditor";
 import MultiRateScheduleEditor, { MultiRateWeekSchedule } from "./MultiRateScheduleEditor";
-import ScheduleEditor from "./ScheduleEditor";
 import CostComparisonTable from "./CostComparisonTable";
 import SingleTariffTable from "./SingleTariffTable";
 import {
@@ -852,53 +850,6 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
                     )}
                   </div>
                 )}
-                <TariffSettings
-                  tariffNumber={1}
-                  isFlatRate={isFlatRate}
-                  setIsFlatRate={setIsFlatRate}
-                  flatRate={flatRate}
-                  setFlatRate={setFlatRate}
-                  isGasFlatRate={isGasFlatRate}
-                  setIsGasFlatRate={setIsGasFlatRate}
-                  gasRate={gasRate}
-                  setGasRate={setGasRate}
-                  gasPeakRate={gasPeakRate}
-                  setGasPeakRate={setGasPeakRate}
-                  gasOffPeakRate={gasOffPeakRate}
-                  setGasOffPeakRate={setGasOffPeakRate}
-                  gasDailyCharge={gasDailyCharge}
-                  setGasDailyCharge={setGasDailyCharge}
-                  peakRate={peakRate}
-                  setPeakRate={setPeakRate}
-                  offPeakRate={offPeakRate}
-                  setOffPeakRate={setOffPeakRate}
-                  dailyCharge={dailyCharge}
-                  setDailyCharge={setDailyCharge}
-                  showAdvanced={showAdvanced}
-                  setShowAdvanced={setShowAdvanced}
-                  showGasAdvanced={showGasAdvanced}
-                  setShowGasAdvanced={setShowGasAdvanced}
-                  schedule={schedule}
-                  gasSchedule={gasSchedule}
-                  updateDaySchedule={updateDaySchedule}
-                  updateGasDaySchedule={updateGasDaySchedule}
-                  addPeakPeriod={addPeakPeriod}
-                  addGasPeakPeriod={addGasPeakPeriod}
-                  removePeakPeriod={removePeakPeriod}
-                  removeGasPeakPeriod={removeGasPeakPeriod}
-                  updatePeakPeriod={updatePeakPeriod}
-                  updateGasPeakPeriod={updateGasPeakPeriod}
-                  copyScheduleToAll={copyScheduleToAll}
-                  copyGasScheduleToAll={copyGasScheduleToAll}
-                  renderScheduleEditor={(props: {
-                    schedule: WeekSchedule;
-                    updateScheduleFn: (day: string, updates: Partial<DaySchedule>) => void;
-                    addPeriodFn: (day: string) => void;
-                    removePeriodFn: (day: string, id: string) => void;
-                    updatePeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void;
-                    copyToAllFn: (day: string) => void;
-                  }) => <ScheduleEditor {...props} />}
-                />
               </div>
             </div>
 
@@ -969,54 +920,6 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
                     )}
                   </div>
                 )}
-
-                <TariffSettings
-                  tariffNumber={2}
-                  isFlatRate={isFlatRate2}
-                  setIsFlatRate={setIsFlatRate2}
-                  flatRate={flatRate2}
-                  setFlatRate={setFlatRate2}
-                  isGasFlatRate={isGasFlatRate2}
-                  setIsGasFlatRate={setIsGasFlatRate2}
-                  gasRate={gasRate2}
-                  setGasRate={setGasRate2}
-                  gasPeakRate={gasPeakRate2}
-                  setGasPeakRate={setGasPeakRate2}
-                  gasOffPeakRate={gasOffPeakRate2}
-                  setGasOffPeakRate={setGasOffPeakRate2}
-                  gasDailyCharge={gasDailyCharge2}
-                  setGasDailyCharge={setGasDailyCharge2}
-                  peakRate={peakRate2}
-                  setPeakRate={setPeakRate2}
-                  offPeakRate={offPeakRate2}
-                  setOffPeakRate={setOffPeakRate2}
-                  dailyCharge={dailyCharge2}
-                  setDailyCharge={setDailyCharge2}
-                  showAdvanced={showAdvanced2}
-                  setShowAdvanced={setShowAdvanced2}
-                  showGasAdvanced={showGasAdvanced2}
-                  setShowGasAdvanced={setShowGasAdvanced2}
-                  schedule={schedule2}
-                  gasSchedule={gasSchedule2}
-                  updateDaySchedule={updateDaySchedule2}
-                  updateGasDaySchedule={updateGasDaySchedule2}
-                  addPeakPeriod={addPeakPeriod2}
-                  addGasPeakPeriod={addGasPeakPeriod2}
-                  removePeakPeriod={removePeakPeriod2}
-                  removeGasPeakPeriod={removeGasPeakPeriod2}
-                  updatePeakPeriod={updatePeakPeriod2}
-                  updateGasPeakPeriod={updateGasPeakPeriod2}
-                  copyScheduleToAll={copyScheduleToAll2}
-                  copyGasScheduleToAll={copyGasScheduleToAll2}
-                  renderScheduleEditor={(props: {
-                    schedule: WeekSchedule;
-                    updateScheduleFn: (day: string, updates: Partial<DaySchedule>) => void;
-                    addPeriodFn: (day: string) => void;
-                    removePeriodFn: (day: string, id: string) => void;
-                    updatePeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void;
-                    copyToAllFn: (day: string) => void;
-                  }) => <ScheduleEditor {...props} />}
-                />
               </div>
             </div>
           </div>
@@ -1169,57 +1072,6 @@ export default function TariffCalculator({ allData, gasData = [] }: TariffCalcul
                   </>
                 )}
               </>
-            )}
-
-            {/* Only show old TariffSettings if not using multi-rate mode */}
-            {!useMultiRate1 && (
-              <TariffSettings
-                tariffNumber={1}
-                isFlatRate={isFlatRate}
-                setIsFlatRate={setIsFlatRate}
-                flatRate={flatRate}
-                setFlatRate={setFlatRate}
-                isGasFlatRate={isGasFlatRate}
-                setIsGasFlatRate={setIsGasFlatRate}
-                gasRate={gasRate}
-                setGasRate={setGasRate}
-                gasPeakRate={gasPeakRate}
-                setGasPeakRate={setGasPeakRate}
-                gasOffPeakRate={gasOffPeakRate}
-                setGasOffPeakRate={setGasOffPeakRate}
-                gasDailyCharge={gasDailyCharge}
-                setGasDailyCharge={setGasDailyCharge}
-                peakRate={peakRate}
-                setPeakRate={setPeakRate}
-                offPeakRate={offPeakRate}
-                setOffPeakRate={setOffPeakRate}
-                dailyCharge={dailyCharge}
-                setDailyCharge={setDailyCharge}
-                showAdvanced={showAdvanced}
-                setShowAdvanced={setShowAdvanced}
-                showGasAdvanced={showGasAdvanced}
-                setShowGasAdvanced={setShowGasAdvanced}
-                schedule={schedule}
-                gasSchedule={gasSchedule}
-                updateDaySchedule={updateDaySchedule}
-                updateGasDaySchedule={updateGasDaySchedule}
-                addPeakPeriod={addPeakPeriod}
-                addGasPeakPeriod={addGasPeakPeriod}
-                removePeakPeriod={removePeakPeriod}
-                removeGasPeakPeriod={removeGasPeakPeriod}
-                updatePeakPeriod={updatePeakPeriod}
-                updateGasPeakPeriod={updateGasPeakPeriod}
-                copyScheduleToAll={copyScheduleToAll}
-                copyGasScheduleToAll={copyGasScheduleToAll}
-                renderScheduleEditor={(props: {
-                  schedule: WeekSchedule;
-                  updateScheduleFn: (day: string, updates: Partial<DaySchedule>) => void;
-                  addPeriodFn: (day: string) => void;
-                  removePeriodFn: (day: string, id: string) => void;
-                  updatePeriodFn: (day: string, id: string, field: "start" | "end", value: string) => void;
-                  copyToAllFn: (day: string) => void;
-                }) => <ScheduleEditor {...props} />}
-              />
             )}
           </div>
         )}

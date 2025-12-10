@@ -43,9 +43,9 @@ export function usePowerPlans() {
   useEffect(() => {
     async function init() {
       try {
-        const s = await fetch("/api/auth/session").then((r) => r.json());
+        const s = await fetch("/api/auth/session", { credentials: "include" }).then((r) => r.json());
         setUser(s.user ?? null);
-        const p = await fetch("/api/power-plans?active=0").then((r) => r.json());
+        const p = await fetch("/api/power-plans?active=0", { credentials: "include" }).then((r) => r.json());
         setPlans(p.plans ?? []);
       } catch (err) {
         console.error(err);
@@ -67,6 +67,7 @@ export function usePowerPlans() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(plan),
+        credentials: "include",
       });
       console.log("Response status:", res.status);
       if (!res.ok) {
@@ -92,6 +93,7 @@ export function usePowerPlans() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
+        credentials: "include",
       });
       if (!res.ok) {
         const j = await res.json();
@@ -109,7 +111,7 @@ export function usePowerPlans() {
   const deletePlan = async (id: number) => {
     setError(null);
     try {
-      const res = await fetch(`/api/power-plans/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/power-plans/${id}`, { method: "DELETE", credentials: "include" });
       if (!res.ok) {
         const j = await res.json();
         throw new Error(j.error || "Failed to delete");

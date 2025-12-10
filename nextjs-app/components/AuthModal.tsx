@@ -28,6 +28,7 @@ export default function AuthModal({ onSuccess }: AuthModalProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -51,6 +52,7 @@ export default function AuthModal({ onSuccess }: AuthModalProps) {
     try {
       const response = await fetch("/api/auth/guest", {
         method: "POST",
+        credentials: "include",
       });
 
       const data = await response.json();
