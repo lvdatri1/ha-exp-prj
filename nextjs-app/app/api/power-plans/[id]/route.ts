@@ -52,7 +52,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const updated = await updatePowerPlan(id, normalized);
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ plan: updated });
+
+    // Normalize response to match GET endpoint format (convert booleans to 1/0)
+    const normalizedResponse = {
+      ...updated,
+      active: updated.active ? 1 : 0,
+      is_flat_rate: updated.is_flat_rate ? 1 : 0,
+      has_gas: updated.has_gas ? 1 : 0,
+      gas_is_flat_rate: updated.gas_is_flat_rate ? 1 : 0,
+    };
+
+    return NextResponse.json({ plan: normalizedResponse });
   } catch (err) {
     console.error("Update plan error:", err);
     return NextResponse.json({ error: "Failed to update plan" }, { status: 500 });

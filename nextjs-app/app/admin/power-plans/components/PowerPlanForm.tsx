@@ -270,7 +270,7 @@ export default function PowerPlanForm({
           <input
             type="checkbox"
             className="checkbox checkbox-primary"
-            checked={form.active === 1}
+            checked={form.active === 1 || form.active === true}
             onChange={(e) => setForm({ ...form, active: e.target.checked ? 1 : 0 })}
           />
           <span className="label-text font-semibold">Active</span>
