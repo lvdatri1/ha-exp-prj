@@ -22,7 +22,9 @@ export default function PowerPlansAdminPage() {
     gas_flat_rate: null,
     gas_daily_charge: null,
     electricity_rates: null,
+    electricity_schedule: null,
     gas_rates: null,
+    gas_schedule: null,
   });
 
   // Edit form state
@@ -32,7 +34,15 @@ export default function PowerPlansAdminPage() {
   // Handle create plan
   const handleCreatePlan = async () => {
     setError(null);
+
+    // Validate required fields
+    if (!form.retailer || !form.name) {
+      setError("Retailer and Plan Name are required");
+      return;
+    }
+
     try {
+      console.log("Creating plan with data:", form);
       await createPlan(form);
 
       // Reset form
@@ -48,15 +58,25 @@ export default function PowerPlansAdminPage() {
         gas_flat_rate: null,
         gas_daily_charge: null,
         electricity_rates: null,
+        electricity_schedule: null,
         gas_rates: null,
+        gas_schedule: null,
       });
     } catch (err) {
+      console.error("Create plan error:", err);
       // Error already set in hook
     }
   };
 
   // Handle open edit
   const handleOpenEdit = (plan: PowerPlan) => {
+    console.log("[EDIT] Opening edit for plan:", {
+      id: plan.id,
+      retailer: plan.retailer,
+      name: plan.name,
+      has_electricity_schedule: !!plan.electricity_schedule,
+      has_gas_schedule: !!plan.gas_schedule,
+    });
     setEditingId(plan.id || null);
     setEditForm(plan);
   };

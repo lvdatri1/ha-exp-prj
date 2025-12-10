@@ -89,6 +89,10 @@ model PowerPlan {
   // New flexible gas rate structure
   gasRates       String?  @map("gas_rates") // JSON
   gasDailyCharge Float?   @map("gas_daily_charge")
+  // Schedule definitions for time-based rates
+  // Stores MultiRateWeekSchedule as JSON { monday: {...}, tuesday: {...}, ... }
+  electricitySchedule String? @map("electricity_schedule") // JSON
+  gasSchedule     String?  @map("gas_schedule") // JSON
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

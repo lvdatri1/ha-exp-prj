@@ -20,6 +20,7 @@ export interface PowerPlan {
   off_peak_rate?: number | null;
   // New flexible rate structure
   electricity_rates?: string | null; // JSON: { "free": 0, "night": 0.15, "day": 0.25, "peak": 0.35 }
+  electricity_schedule?: string | null; // JSON: schedule data
   daily_charge?: number | null;
   has_gas: number;
   gas_is_flat_rate: number;
@@ -29,6 +30,7 @@ export interface PowerPlan {
   gas_off_peak_rate?: number | null;
   // New flexible gas rate structure
   gas_rates?: string | null; // JSON
+  gas_schedule?: string | null; // JSON: schedule data
   gas_daily_charge?: number | null;
 }
 
@@ -60,19 +62,24 @@ export function usePowerPlans() {
   const createPlan = async (plan: PowerPlan) => {
     setError(null);
     try {
+      console.log("Creating plan, sending data:", plan);
       const res = await fetch("/api/power-plans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(plan),
       });
+      console.log("Response status:", res.status);
       if (!res.ok) {
         const j = await res.json();
+        console.error("API error response:", j);
         throw new Error(j.error || "Failed to create");
       }
       const j = await res.json();
+      console.log("Created plan:", j.plan);
       setPlans((prev) => [j.plan, ...prev]);
       return j.plan;
     } catch (err: any) {
+      console.error("Create plan error:", err);
       setError(err.message || String(err));
       throw err;
     }

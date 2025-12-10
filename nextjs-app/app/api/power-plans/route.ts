@@ -3,9 +3,17 @@ import { listPowerPlans, createPowerPlan, getUserById, PowerPlan } from "@/lib/d
 
 async function requireAdmin(request: NextRequest) {
   const userId = request.cookies.get("session_user_id")?.value;
-  if (!userId) return null;
+  console.log("RequireAdmin - userId from cookie:", userId);
+  if (!userId) {
+    console.log("No userId cookie found");
+    return null;
+  }
   const user = await getUserById(parseInt(userId));
-  if (!user || user.is_admin !== true) return null;
+  console.log("User from DB:", user?.username, "isAdmin:", user?.is_admin);
+  if (!user || user.is_admin !== true) {
+    console.log("User not found or not admin");
+    return null;
+  }
   return user;
 }
 
@@ -58,6 +66,7 @@ export async function POST(request: NextRequest) {
       is_flat_rate: toBool(body.is_flat_rate, true),
       flat_rate: body.flat_rate ?? null,
       electricity_rates: body.electricity_rates ?? null,
+      electricity_schedule: body.electricity_schedule ?? null,
       peak_rate: body.peak_rate ?? null,
       off_peak_rate: body.off_peak_rate ?? null,
       daily_charge: body.daily_charge ?? null,
@@ -65,6 +74,7 @@ export async function POST(request: NextRequest) {
       gas_is_flat_rate: toBool(body.gas_is_flat_rate, true),
       gas_flat_rate: body.gas_flat_rate ?? null,
       gas_rates: body.gas_rates ?? null,
+      gas_schedule: body.gas_schedule ?? null,
       gas_peak_rate: body.gas_peak_rate ?? null,
       gas_off_peak_rate: body.gas_off_peak_rate ?? null,
       gas_daily_charge: body.gas_daily_charge ?? null,
@@ -81,6 +91,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ plan: normalized }, { status: 201 });
   } catch (err) {
     console.error("Create plan error:", err);
-    return NextResponse.json({ error: "Failed to create plan" }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Failed to create plan: ${errorMessage}` }, { status: 500 });
   }
 }

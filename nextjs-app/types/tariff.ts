@@ -17,6 +17,9 @@ export interface ExternalPowerPlan {
   // Flexible rate structures (JSON)
   electricity_rates?: string | null;
   gas_rates?: string | null;
+  // Schedule structures (JSON - MultiRateWeekSchedule)
+  electricity_schedule?: string | null;
+  gas_schedule?: string | null;
 }
 
 export interface TariffCalculatorProps {

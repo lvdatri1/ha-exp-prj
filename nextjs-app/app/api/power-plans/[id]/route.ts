@@ -25,7 +25,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   const id = parseInt(params.id);
   if (Number.isNaN(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   try {
-    const body = await request.json();
+    const raw = await request.text();
+    if (!raw || raw.trim().length === 0) {
+      return NextResponse.json({ error: "Request body required" }, { status: 400 });
+    }
+    let body: any;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
 
     const toBool = (v: any, def: boolean = false) => {
       if (v === undefined || v === null) return def;
@@ -51,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const admin = requireAdmin(request);
+  const admin = await requireAdmin(request);
   if (!admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

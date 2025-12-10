@@ -41,7 +41,7 @@ export default function PlanDetailsDisplay({ plan }: PlanDetailsDisplayProps) {
                   <div key={key} className="flex justify-between text-blue-800">
                     <span className="font-medium capitalize">{key.replace(/_/g, " ")}:</span>
                     <span className="font-mono bg-white px-2 py-0.5 rounded">
-                      {typeof value === "number" ? `€${value.toFixed(4)}/kWh` : String(value)}
+                      {typeof value === "number" ? `$${value.toFixed(4)}/kWh` : String(value)}
                     </span>
                   </div>
                 );
@@ -54,13 +54,13 @@ export default function PlanDetailsDisplay({ plan }: PlanDetailsDisplayProps) {
             {plan.peak_rate != null && (
               <div className="flex justify-between text-blue-800">
                 <span className="font-medium">Peak Rate:</span>
-                <span className="font-mono bg-white px-2 py-0.5 rounded">€{plan.peak_rate.toFixed(4)}/kWh</span>
+                <span className="font-mono bg-white px-2 py-0.5 rounded">${plan.peak_rate.toFixed(4)}/kWh</span>
               </div>
             )}
             {plan.off_peak_rate != null && (
               <div className="flex justify-between text-blue-800">
                 <span className="font-medium">Off-Peak Rate:</span>
-                <span className="font-mono bg-white px-2 py-0.5 rounded">€{plan.off_peak_rate.toFixed(4)}/kWh</span>
+                <span className="font-mono bg-white px-2 py-0.5 rounded">${plan.off_peak_rate.toFixed(4)}/kWh</span>
               </div>
             )}
           </div>
@@ -69,7 +69,7 @@ export default function PlanDetailsDisplay({ plan }: PlanDetailsDisplayProps) {
         )}
         {plan.daily_charge != null && (
           <div className="text-xs text-blue-700 mt-1 pt-1 border-t border-blue-200">
-            Daily charge: <span className="font-mono">€{plan.daily_charge.toFixed(4)}</span>
+            Daily charge: <span className="font-mono">${plan.daily_charge.toFixed(4)}</span>
           </div>
         )}
       </div>
@@ -86,7 +86,7 @@ export default function PlanDetailsDisplay({ plan }: PlanDetailsDisplayProps) {
                     <div key={key} className="flex justify-between text-orange-800">
                       <span className="font-medium capitalize">{key.replace(/_/g, " ")}:</span>
                       <span className="font-mono bg-white px-2 py-0.5 rounded">
-                        {typeof value === "number" ? `€${value.toFixed(4)}/kWh` : String(value)}
+                        {typeof value === "number" ? `$${value.toFixed(4)}/kWh` : String(value)}
                       </span>
                     </div>
                   );
@@ -99,14 +99,14 @@ export default function PlanDetailsDisplay({ plan }: PlanDetailsDisplayProps) {
               {plan.gas_peak_rate != null && (
                 <div className="flex justify-between text-orange-800">
                   <span className="font-medium">Peak Rate:</span>
-                  <span className="font-mono bg-white px-2 py-0.5 rounded">€{plan.gas_peak_rate.toFixed(4)}/kWh</span>
+                  <span className="font-mono bg-white px-2 py-0.5 rounded">${plan.gas_peak_rate.toFixed(4)}/kWh</span>
                 </div>
               )}
               {plan.gas_off_peak_rate != null && (
                 <div className="flex justify-between text-orange-800">
                   <span className="font-medium">Off-Peak Rate:</span>
                   <span className="font-mono bg-white px-2 py-0.5 rounded">
-                    €{plan.gas_off_peak_rate.toFixed(4)}/kWh
+                    ${plan.gas_off_peak_rate.toFixed(4)}/kWh
                   </span>
                 </div>
               )}
@@ -116,7 +116,7 @@ export default function PlanDetailsDisplay({ plan }: PlanDetailsDisplayProps) {
           )}
           {plan.gas_daily_charge != null && (
             <div className="text-xs text-orange-700 mt-1 pt-1 border-t border-orange-200">
-              Daily charge: <span className="font-mono">€{plan.gas_daily_charge.toFixed(4)}</span>
+              Daily charge: <span className="font-mono">${plan.gas_daily_charge.toFixed(4)}</span>
             </div>
           )}
         </div>
