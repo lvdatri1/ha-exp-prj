@@ -265,6 +265,18 @@ export default function PowerPlanForm({
         </div>
       </div>
 
+      <div className="form-control">
+        <label className="label cursor-pointer justify-start gap-3">
+          <input
+            type="checkbox"
+            className="checkbox checkbox-primary"
+            checked={form.active === 1}
+            onChange={(e) => setForm({ ...form, active: e.target.checked ? 1 : 0 })}
+          />
+          <span className="label-text font-semibold">Active</span>
+        </label>
+      </div>
+
       <div className="divider">Electricity</div>
 
       <div className="form-control">
