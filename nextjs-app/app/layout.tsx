@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HA Energy Portal",
+  title: "FlipHQ — Smarter Power Plans, Lower Bills",
   description: "Real-time energy consumption analytics and forecasting",
 };
 

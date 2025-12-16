@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Authentication Flow", () => {
   test("should display login page", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /energy dashboard/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /FlipHQ — Smarter Power Plans, Lower Bills/i })).toBeVisible();
   });
 
   test("should login as guest", async ({ page }) => {

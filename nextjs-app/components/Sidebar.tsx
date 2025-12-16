@@ -13,7 +13,7 @@ export default function Sidebar() {
       <div className="p-4 border-b border-base-300">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded bg-primary/15 text-primary grid place-items-center">⚡</div>
-          <span className="font-semibold">HA Energy Portal</span>
+          <span className="font-semibold">FlipHQ — Smarter Power Plans, Lower Bills</span>
         </div>
       </div>
       <nav className="menu p-4">

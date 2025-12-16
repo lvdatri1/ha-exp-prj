@@ -10,7 +10,7 @@ test.describe("Dashboard Navigation", () => {
   });
 
   test("should display main dashboard", async ({ page }) => {
-    await expect(page.getByText(/energy.*dashboard/i)).toBeVisible();
+    await expect(page.getByText(/FlipHQ — Smarter Power Plans, Lower Bills/i)).toBeVisible();
   });
 
   test("should navigate between tabs", async ({ page }) => {

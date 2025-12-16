@@ -5,7 +5,7 @@ import { paths } from "@/lib/api-spec/paths";
 export const swaggerDefinition = {
   openapi: "3.0.0",
   info: {
-    title: "Home Energy Dashboard API",
+    title: "FlipHQ — Smarter Power Plans, Lower Bills API",
     version: "1.0.0",
     description: "API for managing home energy data, authentication, power plans, and admin tools.",
     contact: { name: "API Support" },

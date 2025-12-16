@@ -7,7 +7,7 @@ test.describe("Accessibility Tests", () => {
   });
 
   test("should have proper page title", async ({ page }) => {
-    await expect(page).toHaveTitle(/energy.*dashboard/i);
+    await expect(page).toHaveTitle(/FlipHQ — Smarter Power Plans, Lower Bills/i);
   });
 
   test("should have accessible form labels", async ({ page }) => {
@@ -48,7 +48,9 @@ test.describe("Responsive Design", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /FlipHQ — Smarter Power Plans, Lower Bills/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display on tablet viewport", async ({ page }) => {
@@ -56,7 +58,9 @@ test.describe("Responsive Design", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /FlipHQ — Smarter Power Plans, Lower Bills/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display on desktop viewport", async ({ page }) => {
@@ -64,7 +68,9 @@ test.describe("Responsive Design", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { name: /energy.*dashboard/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /FlipHQ — Smarter Power Plans, Lower Bills/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("admin panel should be responsive", async ({ page }) => {

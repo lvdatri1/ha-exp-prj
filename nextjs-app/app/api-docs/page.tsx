@@ -11,10 +11,10 @@ const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
 const apiSpec = {
   openapi: "3.0.0",
   info: {
-    title: "Home Energy Dashboard API",
+    title: "FlipHQ — Smarter Power Plans, Lower Bills API",
     version: "1.0.0",
     description:
-      "Complete API documentation for the Home Energy Dashboard application. Manage authentication, energy/gas data, power plans, and admin features.",
+      "Complete API documentation for the FlipHQ platform: Smarter Power Plans, Lower Bills. Manage authentication, energy/gas data, power plans, and admin features.",
     contact: { name: "API Support" },
   },
   servers: [{ url: "http://localhost:3000", description: "Development server" }],
@@ -43,7 +43,7 @@ const apiSpec = {
 
 export default function ApiDocsPage() {
   useEffect(() => {
-    document.title = "API Documentation - Home Energy Dashboard";
+    document.title = "API Documentation — FlipHQ: Smarter Power Plans, Lower Bills";
   }, []);
 
   return (
@@ -56,7 +56,9 @@ export default function ApiDocsPage() {
           textAlign: "center",
         }}
       >
-        <h1 style={{ margin: 0, fontSize: "2.5rem", fontWeight: 700 }}>Home Energy Dashboard API</h1>
+        <h1 style={{ margin: 0, fontSize: "2.5rem", fontWeight: 700 }}>
+          FlipHQ — Smarter Power Plans, Lower Bills API
+        </h1>
         <p style={{ margin: "10px 0 0", fontSize: "1.1rem", opacity: 0.95 }}>
           Complete REST API documentation for energy monitoring and management
         </p>

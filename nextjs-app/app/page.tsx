@@ -107,7 +107,7 @@ export default function Home() {
           <div className="card-body">
             <div className="text-center mb-5">
               <div className="inline-block text-4xl mb-3">⚡</div>
-              <h1 className="text-3xl font-bold mb-1">Energy Dashboard</h1>
+              <h1 className="text-3xl font-bold mb-1">FlipHQ — Smarter Power Plans, Lower Bills</h1>
               <p className="text-sm text-base-content/70">Real-time energy consumption analytics and forecasting</p>
             </div>
 

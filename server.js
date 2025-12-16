@@ -416,7 +416,7 @@ app.get("/", (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energy Data Dashboard</title>
+    <title>FlipHQ — Smarter Power Plans, Lower Bills</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -648,7 +648,7 @@ app.get("/", (req, res) => {
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚡ Energy Data Dashboard</h1>
+            <h1>⚡ FlipHQ — Smarter Power Plans, Lower Bills</h1>
             <p>Real-time energy consumption analytics and forecasting</p>
         </div>
 
