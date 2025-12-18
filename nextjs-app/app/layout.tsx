@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FlipHQ — Smarter Power Plans, Lower Bills",
   description: "Real-time energy consumption analytics and forecasting",
+  icons: {
+    icon: "/flipqa.svg",
+    shortcut: "/flipqa.svg",
+    apple: "/flipqa.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

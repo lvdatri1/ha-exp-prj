@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
@@ -12,7 +13,7 @@ export default function Sidebar() {
     <aside className="w-64 bg-base-100 border-r border-base-300">
       <div className="p-4 border-b border-base-300">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded bg-primary/15 text-primary grid place-items-center">⚡</div>
+          <Image src="/flipqh.svg" alt="FlipHQ Logo" width={40} height={40} />
           <span className="font-semibold">FlipHQ — Smarter Power Plans, Lower Bills</span>
         </div>
       </div>

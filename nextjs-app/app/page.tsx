@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import DataTab from "@/components/DataTab";
 import ChartsTab from "@/components/ChartsTab";
 import ImportTab from "@/components/ImportTab";
@@ -105,9 +106,11 @@ export default function Home() {
         <div className="card w-full bg-base-100 shadow-xl">
           {/* Header */}
           <div className="card-body">
-            <div className="text-center mb-5">
-              <div className="inline-block text-4xl mb-3">⚡</div>
-              <h1 className="text-3xl font-bold mb-1">FlipHQ — Smarter Power Plans, Lower Bills</h1>
+            <div className="text-center mb-5 flex flex-col items-center">
+              <div className="mb-3 flex justify-center">
+                <Image src="/flipqh.svg" alt="FlipHQ Logo" width={240} height={240} />
+              </div>
+              <h1 className="text-3xl font-bold mb-1">Smarter Power Plans, Lower Bills</h1>
               <p className="text-sm text-base-content/70">Real-time energy consumption analytics and forecasting</p>
             </div>
 
