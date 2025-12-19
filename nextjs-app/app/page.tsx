@@ -108,7 +108,7 @@ export default function Home() {
           <div className="card-body">
             <div className="text-center mb-5 flex flex-col items-center">
               <div className="mb-3 flex justify-center">
-                <Image src="/flipqh.svg" alt="FlipHQ Logo" width={240} height={240} />
+                <Image src="/logo.svg" alt="FlipHQ Logo" width={240} height={240} />
               </div>
               <h1 className="text-3xl font-bold mb-1">Smarter Power Plans, Lower Bills</h1>
               <p className="text-sm text-base-content/70">Real-time energy consumption analytics and forecasting</p>

@@ -5,9 +5,9 @@ export const metadata: Metadata = {
   title: "FlipHQ — Smarter Power Plans, Lower Bills",
   description: "Real-time energy consumption analytics and forecasting",
   icons: {
-    icon: "/flipqa.svg",
-    shortcut: "/flipqa.svg",
-    apple: "/flipqa.svg",
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 

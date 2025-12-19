@@ -7,3 +7,6 @@ out/
 .env*.local
 
 /lib/generated/prisma
+# Playwright test reports and artifacts
+playwright-report/
+test-results/

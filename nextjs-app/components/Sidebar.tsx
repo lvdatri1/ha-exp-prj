@@ -13,7 +13,7 @@ export default function Sidebar() {
     <aside className="w-64 bg-base-100 border-r border-base-300">
       <div className="p-4 border-b border-base-300">
         <div className="flex items-center gap-2">
-          <Image src="/flipqh.svg" alt="FlipHQ Logo" width={40} height={40} />
+          <Image src="/logo.svg" alt="FlipHQ Logo" width={40} height={40} />
           <span className="font-semibold">FlipHQ — Smarter Power Plans, Lower Bills</span>
         </div>
       </div>
